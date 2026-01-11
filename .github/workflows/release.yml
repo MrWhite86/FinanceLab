@@ -23,6 +23,7 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: install frontend dependencies
+        shell: bash
         run: |
           npm config delete "//registry.npmjs.org/:_authToken" 2> /dev/null || true
           npm install
