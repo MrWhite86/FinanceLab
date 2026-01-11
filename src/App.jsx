@@ -56,7 +56,7 @@ export default function App() {
       // Se il percorso è ancora quello "hardcoded" del Mac, lo aggiorniamo
       if (config.percorsoSalvataggio.includes('/Users/marcellobianco')) {
         try {
-          const { documentDir, join } = await import('@tauri-apps/plugin-path');
+          const { documentDir, join } = await import('@tauri-apps/api/path');
           const docPath = await documentDir();
           const nuovoPercorso = await join(docPath, 'FinanceLab');
           setConfig(prev => ({ ...prev, percorsoSalvataggio: nuovoPercorso }));
@@ -181,9 +181,9 @@ export default function App() {
     alert("Funzionalità di backup disponibile solo in ambiente Desktop (Tauri) configurato.");
     try {
       // Import dinamico: funziona solo se @tauri-apps/api è installato e siamo in ambiente Tauri
-      const { mkdir } = await import('@tauri-apps/plugin-fs');
+      const { createDir } = await import('@tauri-apps/api/fs');
       const ts = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
-      await mkdir(`${config.percorsoSalvataggio}/backup_${ts}`, { recursive: true });
+      await createDir(`${config.percorsoSalvataggio}/backup_${ts}`, { recursive: true });
       alert(`Cartella di backup creata: backup_${ts}`);
     } catch (e) { 
       console.warn("Backup non disponibile o errore permessi:", e);

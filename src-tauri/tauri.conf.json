@@ -1,17 +1,46 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "identifier": "it.marcellobianco.financelab",
-  "productName": "FinanceLab",
-  "version": "0.1.18",
-
+  "$schema": "https://schema.tauri.app/config/1",
+  "package": {
+    "productName": "FinanceLab",
+    "version": "0.1.19"
+  },
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173"
+    "distDir": "../dist",
+    "devPath": "http://localhost:5173"
   },
-
-  "app": {
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "fs": {
+        "all": true,
+        "scope": ["$HOME/**", "C:/**", "/Users/**"]
+      },
+      "path": {
+        "all": true
+      },
+      "shell": {
+        "open": true
+      },
+      "dialog": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "it.marcellobianco.financelab",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ]
+    },
+    "security": {
+      "csp": null
+    },
     "windows": [
       {
         "title": "FinanceLab",
@@ -19,9 +48,8 @@
         "height": 700,
         "resizable": true
       }
-    ],
-    "security": {
-      "csp": null
+    ]
+  }
     }
   }
 }
