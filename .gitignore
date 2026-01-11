@@ -1,0 +1,12 @@
+node_modules
+dist
+src-tauri/target
+.DS_Store
+*.log
+.vscode
+.idea
+*.msi
+*.exe
+*.dmg
+*.app
+src-tauri/gen/schemas
