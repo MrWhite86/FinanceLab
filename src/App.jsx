@@ -170,15 +170,6 @@ export default function App() {
   };
 
   const backupCartella = async () => {
-    // Nota: L'import dinamico di @tauri-apps/api può causare errori se il pacchetto non è installato o se si è sul web.
-    // Decommenta le righe seguenti solo se stai eseguendo in Tauri e hai installato il pacchetto.
-    // try {
-    //   const { createDir } = await import('@tauri-apps/api/fs');
-    //   const ts = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
-    //   await createDir(`${config.percorsoSalvataggio}/backup_${ts}`, { recursive: true });
-    //   alert(`Cartella di backup creata: backup_${ts}`);
-    // } catch (e) { alert("Errore creazione backup: " + e); }
-    alert("Funzionalità di backup disponibile solo in ambiente Desktop (Tauri) configurato.");
     try {
       // Import dinamico: funziona solo se @tauri-apps/api è installato e siamo in ambiente Tauri
       const { createDir } = await import('@tauri-apps/api/fs');
@@ -187,7 +178,7 @@ export default function App() {
       alert(`Cartella di backup creata: backup_${ts}`);
     } catch (e) { 
       console.warn("Backup non disponibile o errore permessi:", e);
-      alert("Funzionalità di backup disponibile solo in ambiente Desktop (Tauri) configurato."); 
+      alert("Funzionalità di backup disponibile solo in ambiente Desktop (Tauri) o permessi non sufficienti.");
     }
   };
 
