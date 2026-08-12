@@ -10,5 +10,10 @@ export default defineConfig({
     rollupOptions: {
       external: ["@tauri-apps/api/tauri"]
     }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js'
   }
 })

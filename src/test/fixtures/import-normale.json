@@ -1,0 +1,20 @@
+{
+  "config": {
+    "saldoStatoZero": 1000,
+    "dataStatoZero": "2026-01-01",
+    "coloreTema": "#4f46e5",
+    "percorsoSalvataggio": "/tmp/finance-lab-test",
+    "tags": [
+      { "nome": "stipendio", "tipo": "entrata" },
+      { "nome": "alimentari", "tipo": "uscita" },
+      { "nome": "casa", "tipo": "uscita" },
+      { "nome": "documenti", "tipo": "neutro" }
+    ],
+    "anniAttivi": ["2026"]
+  },
+  "spese": [
+    { "id": "1", "data": "2026-01-10", "importo": 2000, "tags": ["stipendio"], "nota": "Stipendio gennaio" },
+    { "id": "2", "data": "2026-01-15", "importo": 100, "tags": ["alimentari", "casa"], "nota": "Spesa con due tag uscita" },
+    { "id": "3", "data": "2026-02-05", "importo": 50, "tags": ["alimentari"], "nota": "Spesa supermercato" }
+  ]
+}

@@ -2,13 +2,14 @@
   "$schema": "https://schema.tauri.app/config/1",
   "package": {
     "productName": "FinanceLab",
-    "version": "0.1.23"
+    "version": "0.1.29"
   },
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "distDir": "../dist",
-    "devPath": "http://localhost:5173"
+    "devPath": "http://localhost:5173",
+    "withGlobalTauri": true
   },
   "tauri": {
     "allowlist": {
@@ -21,7 +22,7 @@
         "all": true
       },
       "shell": {
-        "open": true
+        "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(/[\\w\\s.-]+)+|([a-zA-Z]:\\\\.+))"
       },
       "dialog": {
         "all": true

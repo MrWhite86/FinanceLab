@@ -1,0 +1,13 @@
+{
+  "config": {
+    "saldoStatoZero": 500,
+    "dataStatoZero": "2025-01-01",
+    "coloreTema": "#4f46e5",
+    "categorie": [
+      { "nome": "benzina", "tipo": "uscita" }
+    ]
+  },
+  "spese": [
+    { "id": "1", "data": "2025-05-01", "importo": 40, "categoria": "benzina", "nota": "Rifornimento" }
+  ]
+}
