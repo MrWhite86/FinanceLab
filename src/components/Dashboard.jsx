@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as Lucide from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -68,10 +68,20 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
   const [viewMode, setViewMode] = useState('dati');
   
   /** Stato locale per il form di inserimento nuova spesa */
-  const [nuovaSpesa, setNuovaSpesa] = useState({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null });
-  const [selectedLibraryTags, setSelectedLibraryTags] = useState([]); 
-  const [selectedRows, setSelectedRows] = useState([]); 
-  const [animatedRowId, setAnimatedRowId] = useState(null); 
+  const [nuovaSpesa, setNuovaSpesa] = useState({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
+  /** Mostra/nasconde i campi per il valore secondario (es. lordo), escluso da saldo e grafici */
+  const [showValoreSecondario, setShowValoreSecondario] = useState(false);
+  const [selectedLibraryTags, setSelectedLibraryTags] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [animatedRowId, setAnimatedRowId] = useState(null);
+
+  /** Il componente non viene rimontato al cambio di registro/anno: azzera il form quando cambia "anno" */
+  useEffect(() => {
+    setNuovaSpesa({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
+    setShowValoreSecondario(false);
+    setSelectedLibraryTags([]);
+    setSelectedRows([]);
+  }, [anno]);
 
   /** Modalità di visualizzazione grafico (Linee vs Barre) */
   const [chartType, setChartType] = useState('line'); // 'line' | 'bar'
@@ -447,14 +457,52 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
               <div><label style={styles.label}>NOME</label><input type="text" value={nuovaSpesa.nota} onChange={e=>setNuovaSpesa({...nuovaSpesa, nota:e.target.value})} style={styles.input} placeholder="Descrizione del record..."/></div>
               <button onClick={() => {
                 if (!nuovaSpesa.nota.trim()) return showToast("Il campo Nome è obbligatorio");
-                if (!nuovaSpesa.importo || Number(nuovaSpesa.importo) <= 0) return showToast("Inserisci un importo valido");
+                if (nuovaSpesa.data < `${anno}-01-01` || nuovaSpesa.data > `${anno}-12-31`) return showToast(`La data deve essere compresa nel ${anno}`);
+                if (!(Number.isFinite(Number(nuovaSpesa.importo)) && Number(nuovaSpesa.importo) > 0)) return showToast("Inserisci un importo valido");
                 if (nuovaSpesa.tags.length === 0) return showToast("Seleziona almeno un tag");
+                if (showValoreSecondario && nuovaSpesa.valoreSecondario !== '' && !(Number.isFinite(Number(nuovaSpesa.valoreSecondario)) && Number(nuovaSpesa.valoreSecondario) >= 0)) return showToast("Inserisci un valore secondario valido");
 
-                onAddSpesa(nuovaSpesa);
-                setNuovaSpesa({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null });
+                const movimento = { ...nuovaSpesa };
+                if (!showValoreSecondario || movimento.valoreSecondario === '') {
+                  delete movimento.valoreSecondario;
+                  delete movimento.etichettaSecondaria;
+                } else {
+                  movimento.valoreSecondario = Number(movimento.valoreSecondario);
+                  if (!movimento.etichettaSecondaria.trim()) movimento.etichettaSecondaria = 'Secondario';
+                }
+
+                onAddSpesa(movimento);
+                setNuovaSpesa({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
+                setShowValoreSecondario(false);
                 setSelectedLibraryTags([]);
               }} style={{...styles.btn(config.coloreTema), width:'auto'}}>REGISTRA</button>
             </div>
+
+            {!showValoreSecondario ? (
+              <button
+                onClick={() => setShowValoreSecondario(true)}
+                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
+              >
+                <Lucide.Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
+              </button>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                <div>
+                  <label style={styles.label}>VALORE SECONDARIO (€)</label>
+                  <input type="number" value={nuovaSpesa.valoreSecondario} onChange={e => setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: e.target.value })} style={styles.input} placeholder="0.00" />
+                </div>
+                <div>
+                  <label style={styles.label}>ETICHETTA (es. Lordo)</label>
+                  <input type="text" value={nuovaSpesa.etichettaSecondaria} onChange={e => setNuovaSpesa({ ...nuovaSpesa, etichettaSecondaria: e.target.value })} style={styles.input} placeholder="Lordo" />
+                </div>
+                <Lucide.X
+                  size={18}
+                  color="#94a3b8"
+                  style={{ cursor: 'pointer', marginBottom: '12px' }}
+                  onClick={() => { setShowValoreSecondario(false); setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: '', etichettaSecondaria: '' }); }}
+                />
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <span style={styles.label}>SELEZIONA TAG:</span>
@@ -552,6 +600,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       <td style={{ padding: '16px 20px' }}>
                         <div style={{fontWeight:600}}>{mov.nota}</div>
                         {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><Lucide.FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{mov.allegato}</div>}
+                        {mov.valoreSecondario != null && (
+                          <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
+                            {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>€ {Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
                       <td style={{ padding: '16px 20px', textAlign: 'center' }}>

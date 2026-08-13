@@ -15,16 +15,10 @@
     "allowlist": {
       "all": false,
       "fs": {
-        "all": true,
-        "scope": ["$HOME/**", "C:/**", "/Users/**"]
+        "createDir": true,
+        "scope": ["$HOME/**"]
       },
       "path": {
-        "all": true
-      },
-      "shell": {
-        "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(/[\\w\\s.-]+)+|([a-zA-Z]:\\\\.+))"
-      },
-      "dialog": {
         "all": true
       }
     },

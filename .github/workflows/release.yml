@@ -27,6 +27,9 @@ jobs:
         run: |
           npm config delete "//registry.npmjs.org/:_authToken" 2> /dev/null || true
           npm install
+      - name: run tests
+        shell: bash
+        run: npm test
       - name: build the app
         uses: tauri-apps/tauri-action@v0
         env:

@@ -40,3 +40,23 @@ describe('useFinance su dati importati da import-normale.json', () => {
     expect(result2025.current.movimentiAnno).toHaveLength(0);
   });
 });
+
+describe('valoreSecondario (es. lordo dello stipendio)', () => {
+  const config = {
+    saldoStatoZero: 0,
+    dataStatoZero: '2026-01-01',
+    tags: [{ nome: 'stipendio', tipo: 'entrata' }],
+  };
+
+  it('non viene sommato al saldo ne alla ripartizione delle uscite: solo "importo" conta', () => {
+    const spese = [
+      { id: '1', data: '2026-01-10', importo: 1800, tags: ['stipendio'], nota: 'Stipendio', valoreSecondario: 2500, etichettaSecondaria: 'Lordo' },
+    ];
+    const { result } = renderHook(() => useFinance(spese, config, '2026', ''));
+
+    // il saldo deve riflettere il netto (1800), mai il lordo (2500)
+    expect(result.current.saldoAttuale).toBe(1800);
+    // nessuna voce "lordo" deve comparire tra le uscite: il campo e' puramente informativo
+    expect(result.current.datiTorta.uscite).toEqual([]);
+  });
+});

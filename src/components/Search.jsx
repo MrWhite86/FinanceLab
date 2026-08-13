@@ -125,6 +125,11 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   <td style={{ padding: '16px 20px', fontSize:'14px' }}>
                     <div style={{fontWeight:600}}>{mov.nota}</div>
                     {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><Lucide.FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{mov.data.substring(0,4)}/.../{mov.allegato}</div>}
+                    {mov.valoreSecondario != null && (
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
+                        {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>
                     {isNeutro ? 'FILE' : `€ ${Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
