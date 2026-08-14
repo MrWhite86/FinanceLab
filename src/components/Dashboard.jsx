@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import { BarChart2, BarChart3, Check, FileText, PieChart as PieChartIcon, Plus, Tag, Trash2, TrendingUp, X } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -80,6 +80,48 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
   /** Tutti i nomi di tag disponibili nelle impostazioni */
   const allAvailableTagNames = useMemo(() => (config?.tags || []).map(t => t.nome), [config.tags]);
+
+  /** Righe di primo livello (le sottovoci non vengono mostrate come righe indipendenti, ma annidate sotto la madre) */
+  const topLevelSpese = useMemo(() => (speseAnno || []).filter(m => !m.contenitoreId), [speseAnno]);
+
+  /** Per ogni voce madre, le sottovoci collegate (usate per il rendering annidato e il totale categorizzato) */
+  const figliPerGenitore = useMemo(() => {
+    const map = {};
+    (speseAnno || []).forEach(m => {
+      if (m.contenitoreId) {
+        if (!map[m.contenitoreId]) map[m.contenitoreId] = [];
+        map[m.contenitoreId].push(m);
+      }
+    });
+    return map;
+  }, [speseAnno]);
+
+  /** Stato del form inline per aggiungere una sottovoce: null se nessuna riga è espansa */
+  const [rigaApertaPerSottovoce, setRigaApertaPerSottovoce] = useState(null);
+  const [nuovaSottovoce, setNuovaSottovoce] = useState({ importo: '', data: '', nota: '', tags: [] });
+
+  const apriFormSottovoce = (mov) => {
+    if (rigaApertaPerSottovoce === mov.id) { setRigaApertaPerSottovoce(null); return; }
+    setRigaApertaPerSottovoce(mov.id);
+    setNuovaSottovoce({ importo: '', data: mov.data, nota: '', tags: [] });
+  };
+
+  const toggleSottovoceTag = (tagName) => {
+    setNuovaSottovoce(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tagName) ? prev.tags.filter(t => t !== tagName) : [...prev.tags, tagName]
+    }));
+  };
+
+  const registraSottovoce = (parentId) => {
+    if (!nuovaSottovoce.nota.trim()) return showToast("Il campo Nome è obbligatorio");
+    if (nuovaSottovoce.data < `${anno}-01-01` || nuovaSottovoce.data > `${anno}-12-31`) return showToast(`La data deve essere compresa nel ${anno}`);
+    if (!(Number.isFinite(Number(nuovaSottovoce.importo)) && Number(nuovaSottovoce.importo) > 0)) return showToast("Inserisci un importo valido");
+
+    onAddSpesa({ ...nuovaSottovoce, importo: Number(nuovaSottovoce.importo), contenitoreId: parentId });
+    setRigaApertaPerSottovoce(null);
+    setNuovaSottovoce({ importo: '', data: '', nota: '', tags: [] });
+  };
 
   /** Tag scelti dall'utente per l'analisi grafica dell'andamento */
   const [selectedTagsForAnalysis, setSelectedTagsForAnalysis] = useState(() => {
@@ -462,7 +504,6 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   movimento.valoreSecondario = Number(movimento.valoreSecondario);
                   if (!movimento.etichettaSecondaria.trim()) movimento.etichettaSecondaria = 'Secondario';
                 }
-
                 onAddSpesa(movimento);
                 setNuovaSpesa({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
                 setShowValoreSecondario(false);
@@ -546,63 +587,133 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: '#f8fafc' }}>
                 <tr>
-                  <th style={styles.th('40px')}><input type="checkbox" checked={selectedRows.length === speseAnno.length && speseAnno.length > 0} onChange={(e) => setSelectedRows(e.target.checked ? speseAnno.map(s => s.id) : [])} /></th>
+                  <th style={styles.th('40px')}><input type="checkbox" checked={topLevelSpese.length > 0 && selectedRows.length === topLevelSpese.length} onChange={(e) => setSelectedRows(e.target.checked ? topLevelSpese.map(s => s.id) : [])} /></th>
                   <th style={styles.th('12%')}>Data</th>
-                  <th style={styles.th('23%')}>Tag</th>
-                  <th style={styles.th('41%')}>Dettagli</th>
+                  <th style={styles.th('20%')}>Tag</th>
+                  <th style={styles.th('38%')}>Dettagli</th>
                   <th style={styles.th('15%', 'right')}>Importo</th>
-                  <th style={styles.th('5%')}></th>
+                  <th style={styles.th('80px')}></th>
                 </tr>
               </thead>
               <tbody>
-                {speseAnno.map(mov => {
-                  const tagInfos = (mov.tags || []).map(tn => config.tags?.find(t => t.nome === tn)).filter(Boolean);
-                  const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
-                  const isUscita = tagInfos.some(t => t.tipo === 'uscita');
-                  const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
-                  const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#1e293b');
+                {topLevelSpese.map(mov => {
+                  const figli = figliPerGenitore[mov.id] || [];
+                  const haFigli = figli.length > 0;
+                  const categorizzato = figli.reduce((s, f) => s + Number(f.importo), 0);
+                  const superaTotale = haFigli && categorizzato > Number(mov.importo);
+
+                  const renderRiga = (riga, isFiglio) => {
+                    const tagInfos = (riga.tags || []).map(tn => config.tags?.find(t => t.nome === tn)).filter(Boolean);
+                    const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
+                    const isUscita = tagInfos.some(t => t.tipo === 'uscita');
+                    const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
+                    const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#1e293b');
+
+                    return (
+                      <tr key={riga.id}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          style={{
+                            borderBottom: '1px solid #f1f5f9',
+                            transition: 'all 0.2s',
+                            backgroundColor: isNeutro ? '#fcfcfc' : 'transparent',
+                            boxShadow: animatedRowId === riga.id ? `0 0 0 3px ${config.coloreTema}80` : 'none'
+                          }}>
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          {!isFiglio && <input type="checkbox" checked={selectedRows.includes(riga.id)} onChange={() => setSelectedRows(prev => prev.includes(riga.id) ? prev.filter(id => id !== riga.id) : [...prev, riga.id])} />}
+                        </td>
+                        <td style={{ padding: '16px 20px', paddingLeft: isFiglio ? '40px' : '20px' }}>{formatDataIT(riga.data)}</td>
+                        <td style={{ padding: '16px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          {riga.tags?.map(t => (
+                            <span key={t}
+                              onClick={() => onUpdateSpesa(riga.id, { tags: riga.tags.filter(tag => tag !== t) })}
+                              title="Clicca per rimuovere questo tag"
+                              style={{ padding: '4px 8px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10px', fontWeight: '800', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}>
+                              {t.toUpperCase()}
+                              <X size={10} />
+                            </span>
+                          ))}
+                          {isFiglio && (!riga.tags || riga.tags.length === 0) && (
+                            <span style={{ fontSize: '10px', color: '#cbd5e1', fontStyle: 'italic' }}>Nessun tag</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '16px 20px' }}>
+                          <div style={{fontWeight: isFiglio ? 500 : 600, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                            {isFiglio && <span style={{ color: '#cbd5e1' }}>↳</span>}
+                            {riga.nota}
+                          </div>
+                          {riga.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{riga.allegato}</div>}
+                          {riga.valoreSecondario != null && (
+                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
+                              {(riga.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(riga.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                            </div>
+                          )}
+                          {!isFiglio && haFigli && (
+                            <div style={{ fontSize: '10px', fontWeight: '700', marginTop: '2px', color: superaTotale ? '#ef4444' : '#64748b' }}>
+                              € {categorizzato.toLocaleString('it-IT', { minimumFractionDigits: 2 })} categorizzati su € {Number(riga.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                              {superaTotale && ' — supera il totale!'}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>€ {Number(riga.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                            {!isFiglio && (
+                              <Plus size={16} color={config.coloreTema} style={{ cursor: 'pointer' }} title="Aggiungi una sottovoce" onClick={() => apriFormSottovoce(riga)} />
+                            )}
+                            <Trash2 size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => {
+                              if (!isFiglio && haFigli) return showToast("Questa voce ha sottovoci collegate: rimuovile prima di eliminarla.");
+                              onRemoveSpesa(riga.id);
+                            }} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  };
 
                   return (
-                    <tr key={mov.id} 
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        style={{ 
-                          borderBottom: '1px solid #f1f5f9', 
-                          transition: 'all 0.2s',
-                          backgroundColor: isNeutro ? '#fcfcfc' : 'transparent',
-                          boxShadow: animatedRowId === mov.id ? `0 0 0 3px ${config.coloreTema}80` : 'none'
-                        }}>
-                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <input type="checkbox" checked={selectedRows.includes(mov.id)} onChange={() => setSelectedRows(prev => prev.includes(mov.id) ? prev.filter(id => id !== mov.id) : [...prev, mov.id])} />
-                      </td>
-                      <td style={{ padding: '16px 20px' }}>{formatDataIT(mov.data)}</td>
-                      <td style={{ padding: '16px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {mov.tags?.map(t => (
-                          <span key={t} 
-                            onClick={() => onUpdateSpesa(mov.id, { tags: mov.tags.filter(tag => tag !== t) })}
-                            title="Clicca per rimuovere questo tag"
-                            style={{ padding: '4px 8px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10px', fontWeight: '800', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}>
-                            {t.toUpperCase()}
-                            <X size={10} />
-                          </span>
-                        ))}
-                      </td>
-                      <td style={{ padding: '16px 20px' }}>
-                        <div style={{fontWeight:600}}>{mov.nota}</div>
-                        {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{mov.allegato}</div>}
-                        {mov.valoreSecondario != null && (
-                          <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
-                            {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>€ {Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
-                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <Trash2 size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => onRemoveSpesa(mov.id)} />
-                      </td>
-                    </tr>
+                    <Fragment key={mov.id}>
+                      {renderRiga(mov, false)}
+                      {figli.map(figlio => renderRiga(figlio, true))}
+                      {rigaApertaPerSottovoce === mov.id && (
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                          <td></td>
+                          <td colSpan={5} style={{ padding: '14px 20px 18px 40px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '130px 130px 1fr auto auto', gap: '10px', alignItems: 'end' }}>
+                              <div>
+                                <label style={styles.label}>DATA</label>
+                                <input type="date" min={`${anno}-01-01`} max={`${anno}-12-31`} value={nuovaSottovoce.data} onChange={e => setNuovaSottovoce({ ...nuovaSottovoce, data: e.target.value })} style={styles.input} />
+                              </div>
+                              <div>
+                                <label style={styles.label}>IMPORTO (€)</label>
+                                <input type="number" value={nuovaSottovoce.importo} onChange={e => setNuovaSottovoce({ ...nuovaSottovoce, importo: e.target.value })} style={styles.input} />
+                              </div>
+                              <div>
+                                <label style={styles.label}>NOME</label>
+                                <input type="text" value={nuovaSottovoce.nota} onChange={e => setNuovaSottovoce({ ...nuovaSottovoce, nota: e.target.value })} style={styles.input} placeholder="Descrizione della sottovoce..." />
+                              </div>
+                              <Check size={18} color="#10b981" style={{ cursor: 'pointer', marginBottom: '12px' }} title="Salva la sottovoce" onClick={() => registraSottovoce(mov.id)} />
+                              <X size={18} color="#94a3b8" style={{ cursor: 'pointer', marginBottom: '12px' }} title="Annulla" onClick={() => setRigaApertaPerSottovoce(null)} />
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+                              {(config?.tags || []).map(t => (
+                                <div key={t.nome} onClick={() => toggleSottovoceTag(t.nome)}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer',
+                                    background: nuovaSottovoce.tags.includes(t.nome) ? (t.tipo === 'entrata' ? '#10b981' : t.tipo === 'uscita' ? '#ef4444' : '#64748b') : '#fff',
+                                    color: nuovaSottovoce.tags.includes(t.nome) ? '#fff' : '#64748b',
+                                    border: '1px solid #e2e8f0'
+                                  }}>
+                                  {t.nome.toUpperCase()}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>

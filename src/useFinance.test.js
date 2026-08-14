@@ -60,3 +60,48 @@ describe('valoreSecondario (es. lordo dello stipendio)', () => {
     expect(result.current.datiTorta.uscite).toEqual([]);
   });
 });
+
+describe('sottovoci (es. prelievo di 500€ suddiviso in più spese)', () => {
+  const config = {
+    saldoStatoZero: 1000,
+    dataStatoZero: '2026-01-01',
+    tags: [
+      { nome: 'prelievo', tipo: 'uscita' },
+      { nome: 'bollette', tipo: 'uscita' },
+      { nome: 'spesa', tipo: 'uscita' },
+    ],
+  };
+  // La voce madre (il prelievo) e' quella che conta nel saldo: 500€ escono dal conto in quel momento.
+  // Le sottovoci (contenitoreId) sono solo la categorizzazione per tag di dove sono finiti quei soldi,
+  // e non devono mai ridurre il saldo una seconda volta.
+  const spese = [
+    { id: 'c1', data: '2026-01-01', importo: 500, tags: ['prelievo'], nota: 'Prelievo contanti' },
+    { id: 's1', data: '2026-01-05', importo: 100, tags: ['bollette'], nota: 'Bolletta luce', contenitoreId: 'c1' },
+    { id: 's2', data: '2026-01-10', importo: 200, tags: ['spesa'], nota: 'Spesa supermercato', contenitoreId: 'c1' },
+  ];
+
+  it('conta la voce madre nel saldo ed esclude le sottovoci (mai doppio conteggio)', () => {
+    const { result } = renderHook(() => useFinance(spese, config, '2026', ''));
+
+    // 1000 - 500 (solo la madre). Se anche le sottovoci contassero sarebbe 1000-500-100-200=200.
+    expect(result.current.saldoAttuale).toBe(500);
+  });
+
+  it('nel grafico a torta la madre lascia spazio alle sottovoci una volta che esistono', () => {
+    const { result } = renderHook(() => useFinance(spese, config, '2026', ''));
+
+    const uscite = Object.fromEntries(result.current.datiTorta.uscite.map(v => [v.name, v.value]));
+    // PRELIEVO (la madre) non compare più: la categorizzazione reale è nelle sottovoci
+    expect(uscite.PRELIEVO).toBeUndefined();
+    expect(uscite.BOLLETTE).toBe(100);
+    expect(uscite.SPESA).toBe(200);
+  });
+
+  it('se la madre non ha ancora sottovoci, il suo tag conta normalmente nella torta', () => {
+    const soloMadre = [{ id: 'c1', data: '2026-01-01', importo: 500, tags: ['prelievo'], nota: 'Prelievo contanti' }];
+    const { result } = renderHook(() => useFinance(soloMadre, config, '2026', ''));
+
+    const uscite = Object.fromEntries(result.current.datiTorta.uscite.map(v => [v.name, v.value]));
+    expect(uscite.PRELIEVO).toBe(500);
+  });
+});
