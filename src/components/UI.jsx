@@ -1,5 +1,14 @@
+// Due componenti di interfaccia generici e riutilizzabili in tutta l'app (nessuna logica
+// applicativa qui dentro): la notifica in basso a destra e la finestra di dialogo modale.
+// App.jsx tiene lo stato di entrambi (toast/modal) e li renderizza una sola volta, in fondo
+// all'albero dei componenti, cosi' funzionano sopra qualunque vista sia attiva.
 import { Info, X } from 'lucide-react';
 
+/**
+ * Notifica temporanea (si autochiude dopo 4s, vedi showToast in App.jsx).
+ * @param message - una stringa semplice, oppure { text, onUndo } se serve un pulsante ANNULLA
+ *                  (usato per la cancellazione dei movimenti, vedi handleRemoveSpesaWithUndo).
+ */
 export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
   <div style={{ 
     position: 'fixed', bottom: '20px', right: '20px', padding: '12px 20px', 
@@ -33,8 +42,13 @@ export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
   </div>
 );
 
+/**
+ * Finestra di dialogo generica, usata sia per conferme (type='confirm', es. "Elimina Anno")
+ * sia per richiedere un valore testuale (type='prompt', es. "Nuovo Registro" -> l'anno da creare).
+ * onConfirm riceve sempre inputValue: le conferme semplici lo ignorano semplicemente.
+ */
 export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onConfirm, onCancel, themeColor }) => {
-  if (!show) return null;
+  if (!show) return null; // niente da renderizzare finche' nessuno chiama setModal({ show: true, ... })
   return (
     <div style={{ 
       position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', 

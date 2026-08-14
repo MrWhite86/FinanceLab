@@ -1,3 +1,8 @@
+// Logica di import dei backup JSON (pulsante "Importa" in Settings.jsx, gestito da App.jsx).
+// Isolata in un modulo a parte, senza dipendenze da React/DOM, cosi' e' testabile
+// direttamente (vedi importUtils.test.js) passandole semplice testo, senza dover
+// simulare un vero upload di file nel browser.
+
 const DATA_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Un movimento e' importabile solo se ha una data in formato valido e un importo numerico. */
@@ -13,8 +18,10 @@ function isMovimentoValido(s) {
  * dove andrebbero in crash), e conteggiati in skippedCount.
  */
 export function parseImportedData(jsonString) {
-  const json = JSON.parse(jsonString);
+  const json = JSON.parse(jsonString); // lancia SyntaxError se il file non e' JSON valido
 
+  // Config: se il file usa il vecchio nome di campo "categorie", lo rinomina in "tags"
+  // (nome corrente usato da tutto il resto dell'app).
   let config;
   if (json.config) {
     config = { ...json.config };
@@ -24,6 +31,8 @@ export function parseImportedData(jsonString) {
     }
   }
 
+  // Spese: stessa migrazione ma a livello di singolo movimento (categoria singola -> array tags),
+  // poi si scartano i record senza data/importo validi per non far crashare il resto dell'app.
   let spese;
   let skippedCount = 0;
   if (json.spese) {

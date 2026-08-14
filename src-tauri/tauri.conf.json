@@ -16,10 +16,14 @@
       "all": false,
       "fs": {
         "createDir": true,
+        "copyFile": true,
         "scope": ["$HOME/**"]
       },
       "path": {
         "all": true
+      },
+      "dialog": {
+        "open": true
       }
     },
     "bundle": {

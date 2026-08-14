@@ -1,11 +1,20 @@
+// DashboardView è il componente più corposo dell'app: gestisce tutto quello che riguarda
+// UN singolo registro annuale (quello selezionato nella Sidebar). Ha due modalità (viewMode),
+// selezionabili con i pulsanti "DATI"/"ANALISI" in alto:
+//   - 'dati': form per registrare un nuovo movimento + tabella di tutti i movimenti dell'anno,
+//     con le sottovoci annidate sotto la rispettiva voce madre (vedi renderRiga più sotto).
+//   - 'grafici': tre grafici (andamento tag personalizzato, patrimonio mensile, torta uscite)
+//     con i dati già pronti da useFinance.js/App.jsx, passati tramite la prop datiGrafici.
+// È caricato "lazy" da App.jsx (solo quando serve, non al primo avvio) perché importa
+// recharts, una libreria di grafici pesante.
 import { useState, useMemo, Fragment } from 'react';
-import { BarChart2, BarChart3, Check, FileText, PieChart as PieChartIcon, Plus, Tag, Trash2, TrendingUp, X } from 'lucide-react';
+import { BarChart2, BarChart3, Check, FileText, Paperclip, PieChart as PieChartIcon, Plus, Tag, Trash2, TrendingUp, X } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, BarChart, Bar, Legend, PieChart, Pie, Cell
 } from 'recharts';
 
-/** Tooltip Personalizzato Dark Glassmorphism per Grafici */
+/** Tooltip Personalizzato Dark Glassmorphism per Grafici: sostituisce quello di default di recharts, usato da tutti e 3 i grafici a linee/barre. */
 const CustomChartTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const total = payload.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
@@ -64,13 +73,17 @@ const renderCustomPieLabel = ({ name, percent }) => {
  * DashboardView: Gestisce il registro di un anno specifico.
  * Include il form di registrazione, i grafici di analisi personalizzata per tag e la tabella dei movimenti.
  */
-export default function DashboardView({ anno, speseAnno, config, styles, colors, datiGrafici, onAddSpesa, onUpdateSpesa, onRemoveSpesa, currentUser, topTags, showToast }) {
+export default function DashboardView({ anno, speseAnno, config, styles, colors, datiGrafici, onAddSpesa, onUpdateSpesa, onRemoveSpesa, onAllegaFile, topTags, showToast }) {
+  /** 'dati' (tabella + form) oppure 'grafici' (analisi): decide cosa mostrare sotto l'header. */
   const [viewMode, setViewMode] = useState('dati');
-  
-  /** Stato locale per il form di inserimento nuova spesa */
+
+  /** Stato locale del form "nuovo movimento" in cima alla tabella. */
   const [nuovaSpesa, setNuovaSpesa] = useState({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
   /** Mostra/nasconde i campi per il valore secondario (es. lordo), escluso da saldo e grafici */
   const [showValoreSecondario, setShowValoreSecondario] = useState(false);
+  // Selezione multipla in tabella (checkbox) + tag scelti dalla libreria, per applicarli in blocco
+  // alle righe selezionate (bottone "APPLICA ORA"). animatedRowId dà un breve lampeggio alla riga
+  // appena modificata, cosi' l'utente vede subito quale movimento e' stato aggiornato.
   const [selectedLibraryTags, setSelectedLibraryTags] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [animatedRowId, setAnimatedRowId] = useState(null);
@@ -96,16 +109,20 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     return map;
   }, [speseAnno]);
 
-  /** Stato del form inline per aggiungere una sottovoce: null se nessuna riga è espansa */
+  // --- SOTTOVOCI (pulsante "+" su una riga: es. un prelievo suddiviso in più spese) ---
+  /** id della voce madre il cui form inline "aggiungi sottovoce" è aperto; null se nessuna riga è espansa. Una sola alla volta. */
   const [rigaApertaPerSottovoce, setRigaApertaPerSottovoce] = useState(null);
+  /** Stato del mini-form inline per la nuova sottovoce (vedi renderRiga/tabella più sotto). */
   const [nuovaSottovoce, setNuovaSottovoce] = useState({ importo: '', data: '', nota: '', tags: [] });
 
+  /** Click sul "+" di una riga: apre (o chiude, se già aperto) il form inline sotto quella riga, precompilando la data con quella della voce madre. */
   const apriFormSottovoce = (mov) => {
     if (rigaApertaPerSottovoce === mov.id) { setRigaApertaPerSottovoce(null); return; }
     setRigaApertaPerSottovoce(mov.id);
     setNuovaSottovoce({ importo: '', data: mov.data, nota: '', tags: [] });
   };
 
+  /** Seleziona/deseleziona un tag nel mini-form della sottovoce (a differenza del form principale, qui il tag è facoltativo). */
   const toggleSottovoceTag = (tagName) => {
     setNuovaSottovoce(prev => ({
       ...prev,
@@ -113,6 +130,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     }));
   };
 
+  /**
+   * Salva la sottovoce collegandola alla voce madre tramite contenitoreId.
+   * Importante: contenitoreId è ciò che dice a useFinance.js di NON contare questo importo
+   * nel saldo (già contato una volta sulla voce madre) - vedi commenti in useFinance.js.
+   */
   const registraSottovoce = (parentId) => {
     if (!nuovaSottovoce.nota.trim()) return showToast("Il campo Nome è obbligatorio");
     if (nuovaSottovoce.data < `${anno}-01-01` || nuovaSottovoce.data > `${anno}-12-31`) return showToast(`La data deve essere compresa nel ${anno}`);
@@ -123,12 +145,13 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     setNuovaSottovoce({ importo: '', data: '', nota: '', tags: [] });
   };
 
-  /** Tag scelti dall'utente per l'analisi grafica dell'andamento */
+  /** Tag scelti dall'utente per l'analisi grafica dell'andamento (grafico "Andamento Tag Personalizzati"); parte da topTags (i tag più usati, calcolati da useFinance.js) come suggerimento iniziale. */
   const [selectedTagsForAnalysis, setSelectedTagsForAnalysis] = useState(() => {
     if (topTags && topTags.length > 0) return topTags.slice(0, 3);
     return allAvailableTagNames.slice(0, 3);
   });
 
+  /** Aggiunge/rimuove un tag dall'analisi cliccando il suo badge colorato. */
   const toggleAnalysisTag = (tagName) => {
     setSelectedTagsForAnalysis(prev => 
       prev.includes(tagName) ? prev.filter(t => t !== tagName) : [...prev, tagName]
@@ -174,8 +197,14 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     return (datiGrafici?.torta?.uscite || []).reduce((acc, item) => acc + (item.value || 0), 0);
   }, [datiGrafici?.torta?.uscite]);
 
+  /**
+   * Click su un tag nella sezione "SELEZIONA TAG" del form principale: fa doppio lavoro,
+   * lo aggiunge/rimuove sia dal nuovo movimento in costruzione (nuovaSpesa.tags) sia dalla
+   * "libreria" di tag da applicare in blocco alle righe selezionate (selectedLibraryTags) -
+   * due funzioni diverse che condividono la stessa interazione per semplicità di interfaccia.
+   */
   const toggleTag = (tagName) => {
-    setSelectedLibraryTags(prev => 
+    setSelectedLibraryTags(prev =>
       prev.includes(tagName) ? prev.filter(t => t !== tagName) : [...prev, tagName]
     );
     setNuovaSpesa(prev => ({
@@ -184,6 +213,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     }));
   };
 
+  /** Applica tutti i tag selezionati dalla libreria a tutte le righe selezionate con le checkbox (bottone "APPLICA ORA"). */
   const applyTagsToSelected = () => {
     if (selectedLibraryTags.length === 0 || selectedRows.length === 0) return;
     
@@ -205,6 +235,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     setTimeout(() => setAnimatedRowId(null), 600);
   };
 
+  /** Converte una data ISO (2026-03-15, formato usato internamente per poterle ordinare/confrontare come stringhe) nel formato italiano gg/mm/aaaa per la tabella. */
   const formatDataIT = (dateStr) => {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
@@ -222,6 +253,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
         </div>
       </div>
 
+      {/* ===== VISTA "ANALISI" (grafici) ===== */}
       {viewMode === 'grafici' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
           {/* Card: Selettore Tag e Grafico di Andamento Personalizzato */}
@@ -483,8 +515,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           </div>
         </div>
       ) : (
+        /* ===== VISTA "DATI" (form nuovo movimento + tabella) ===== */
         <>
           <div style={styles.card}>
+            {/* Riga principale del form: importo/data/nome + bottone REGISTRA, che valida tutto prima di chiamare onAddSpesa */}
             <div style={{ display: 'grid', gridTemplateColumns: '120px 150px 1fr 120px', gap: '15px', alignItems: 'end', marginBottom: '15px' }}>
               <div><label style={styles.label}>IMPORTO (€)</label><input type="number" value={nuovaSpesa.importo} onChange={e=>setNuovaSpesa({...nuovaSpesa, importo:e.target.value})} style={styles.input}/></div>
               <div><label style={styles.label}>DATA</label><input type="date" min={`${anno}-01-01`} max={`${anno}-12-31`} value={nuovaSpesa.data} onChange={e=>setNuovaSpesa({...nuovaSpesa, data:e.target.value})} style={styles.input}/></div>
@@ -583,6 +617,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             )}
           </div>
 
+          {/*
+            Tabella dei movimenti dell'anno. Struttura a due livelli:
+            - si itera solo su topLevelSpese (le voci madri, senza contenitoreId);
+            - per ognuna, renderRiga() disegna la sua riga, poi quella di ogni sua sottovoce
+              (rientrata, senza checkbox ne' pulsante "+"), poi eventualmente il mini-form
+              inline per aggiungerne una nuova, se l'utente ha cliccato "+" su quella riga.
+            Il checkbox "seleziona tutto" nell'header conta solo le righe di primo livello,
+            coerentemente con le uniche checkbox realmente visibili in tabella.
+          */}
           <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: '#f8fafc' }}>
@@ -592,7 +635,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   <th style={styles.th('20%')}>Tag</th>
                   <th style={styles.th('38%')}>Dettagli</th>
                   <th style={styles.th('15%', 'right')}>Importo</th>
-                  <th style={styles.th('80px')}></th>
+                  <th style={styles.th('110px')}></th>
                 </tr>
               </thead>
               <tbody>
@@ -602,6 +645,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   const categorizzato = figli.reduce((s, f) => s + Number(f.importo), 0);
                   const superaTotale = haFigli && categorizzato > Number(mov.importo);
 
+                  /** Disegna UNA riga (madre o sottovoce): isFiglio nasconde checkbox/pulsante "+" e aggiunge il rientro visivo con "↳". */
                   const renderRiga = (riga, isFiglio) => {
                     const tagInfos = (riga.tags || []).map(tn => config.tags?.find(t => t.nome === tn)).filter(Boolean);
                     const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
@@ -644,7 +688,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             {isFiglio && <span style={{ color: '#cbd5e1' }}>↳</span>}
                             {riga.nota}
                           </div>
-                          {riga.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{riga.allegato}</div>}
+                          {riga.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}} title="Percorso reale del file copiato da allegaFile"><FileText size={10}/> {config.percorsoSalvataggio}/backup/{anno}/{riga.allegato}</div>}
                           {riga.valoreSecondario != null && (
                             <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                               {(riga.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(riga.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
@@ -659,10 +703,19 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>€ {Number(riga.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            {/* Allega file: copia il file scelto in percorsoSalvataggio/backup/<anno del record>/ (solo versione Desktop) */}
+                            <Paperclip
+                              size={16}
+                              color={riga.allegato ? '#10b981' : '#94a3b8'}
+                              style={{ cursor: 'pointer' }}
+                              title={riga.allegato ? `Allegato: ${riga.allegato} (clicca per sostituirlo)` : 'Allega un file'}
+                              onClick={() => onAllegaFile(riga)}
+                            />
                             {!isFiglio && (
                               <Plus size={16} color={config.coloreTema} style={{ cursor: 'pointer' }} title="Aggiungi una sottovoce" onClick={() => apriFormSottovoce(riga)} />
                             )}
+                            {/* Cancellazione bloccata su una voce madre finché ha sottovoci: eviterebbe riferimenti orfani (contenitoreId che punta a un id non più esistente) */}
                             <Trash2 size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => {
                               if (!isFiglio && haFigli) return showToast("Questa voce ha sottovoci collegate: rimuovile prima di eliminarla.");
                               onRemoveSpesa(riga.id);
@@ -673,11 +726,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     );
                   };
 
+                  // Fragment (non un <tr> vero e proprio) perché una voce madre produce PIÙ righe
+                  // di tabella consecutive: la sua riga, poi quella di ogni sottovoce, poi
+                  // eventualmente il mini-form per aggiungerne un'altra.
                   return (
                     <Fragment key={mov.id}>
                       {renderRiga(mov, false)}
                       {figli.map(figlio => renderRiga(figlio, true))}
                       {rigaApertaPerSottovoce === mov.id && (
+                        // Mini-form inline "aggiungi sottovoce", aperto dal pulsante "+" su questa riga madre (vedi apriFormSottovoce)
                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                           <td></td>
                           <td colSpan={5} style={{ padding: '14px 20px 18px 40px' }}>

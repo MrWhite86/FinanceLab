@@ -1,10 +1,18 @@
+// Schermata di autenticazione: mostrata da App.jsx finché non c'è un currentUser.
+// L'app non ha un vero backend: gli account (username -> hash password) vivono nel
+// localStorage del browser sotto la chiave "finance_lab_users" (un localStorage per
+// dispositivo/browser: account e dati non si sincronizzano automaticamente tra Mac e telefono).
+// L'hashing vero e proprio (PBKDF2 + salt) è delegato ad authUtils.js.
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, User, CheckCircle2 } from 'lucide-react';
 import { derivePasswordRecord, verifyPassword, isLegacyRecord } from '../authUtils';
 
 export default function Login({ onLogin, themeColor, styles }) {
+  /** Mappa username -> record password ({hash, salt}, o stringa legacy da migrare), caricata da localStorage. */
   const [users, setUsers] = useState({});
 
+  // Al primo avvio, se non esiste ancora nessun utente, crea l'account "admin" di default
+  // (password "admin") cosi' l'app è subito utilizzabile senza una registrazione forzata.
   useEffect(() => {
     const initializeUsers = async () => {
       const storedUsers = JSON.parse(localStorage.getItem('finance_lab_users') || '{}');
@@ -20,17 +28,20 @@ export default function Login({ onLogin, themeColor, styles }) {
   // Ricorda solo quali username sono stati usati di recente, mai la password: niente testo in chiaro in localStorage.
   const remembered = JSON.parse(localStorage.getItem('finance_lab_remembered') || '{}');
 
+  /** 'login' mostra il form di accesso, 'registro' quello per creare un nuovo profilo locale. */
   const [authMode, setAuthMode] = useState('login');
   const [credentials, setCredentials] = useState({ username: 'admin', password: '' });
   const [rememberMe, setRememberMe] = useState(!!remembered.admin);
 
   const userList = Object.keys(users);
 
+  /** Click su un chip "PROFILI RILEVATI": precompila solo lo username (mai la password), coerente con "Ricorda nome utente". */
   const handleSelectProfile = (name) => {
     setCredentials({ username: name, password: '' });
     setRememberMe(!!remembered[name]);
   };
 
+  /** Gestisce sia la registrazione di un nuovo profilo sia il login, con migrazione trasparente degli account creati con hash pre-salt. */
   const handleAuth = async () => {
     const { username, password } = credentials;
     if (!username.trim()) {
@@ -73,6 +84,9 @@ export default function Login({ onLogin, themeColor, styles }) {
       }
     }
   };
+
+  // Il form cambia poco tra i due authMode: stesso username/password, cambiano solo
+  // titolo, testo del bottone e il link in fondo per passare da login a registrazione.
 
   return (
     <div style={{ 

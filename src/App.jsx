@@ -1,7 +1,18 @@
 /**
  * FinanceLab - Componente Root (v0.1.29)
- * Gestisce l'autenticazione, la persistenza dei dati e la navigazione principale.
-*/
+ *
+ * È il "centro di controllo" dell'app: tiene in memoria tutto lo stato condiviso
+ * (utente loggato, configurazione, elenco movimenti) e lo passa in giù ai componenti
+ * figli come props. I figli (Login/Sidebar/Search/Settings/Dashboard) non parlano
+ * mai direttamente tra loro né toccano localStorage: passano sempre da qui.
+ *
+ * Responsabilità principali:
+ * 1. Autenticazione: mostra LoginView finché non c'è un currentUser.
+ * 2. Persistenza: carica/salva config e movimenti in localStorage, una chiave per utente.
+ * 3. Navigazione: decide quale vista mostrare (Impostazioni/Ricerca/Dashboard di un anno)
+ *    in base ad activeTab.
+ * 4. Calcolo finanziario: delega tutta la logica di calcolo all'hook useFinance.
+ */
 
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Menu } from 'lucide-react';
@@ -20,21 +31,25 @@ const DashboardView = lazy(() => import('./components/Dashboard'));
 
 export default function App() {
   // --- STATO DELL'APPLICAZIONE ---
-  /** 
+  /**
    * Utente correntemente loggato. Se null, mostra la LoginView.
-   * @type {string|null} 
+   * @type {string|null}
    */
   const [currentUser, setCurrentUser] = useState(null);
-  
+
+  // Notifica in basso a destra (stringa semplice, oppure {text, onUndo} per un'azione ANNULLA) e finestra di dialogo modale (conferma/prompt), condivise da tutta l'app.
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState({ show: false, type: 'confirm', title: '', msg: '', onConfirm: null, inputValue: '' });
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
 
+  // Campi del form "Gestione Profilo" in Settings.jsx (nome utente/password da aggiornare).
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  // Tab attiva nella Sidebar: 'impostazioni', 'ricerca', oppure un anno (es. '2026') per aprire quel registro.
   const [activeTab, setActiveTab] = useState('impostazioni');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Larghezza finestra, usata solo per decidere il layout mobile (menu a hamburger) sotto i 1024px.
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,10 +61,11 @@ export default function App() {
 
   const isMobile = windowWidth < 1024;
 
-  /** Inizializza la configurazione e i dati caricandoli dal localStorage per l'utente specifico */
+  /** Configurazione dell'utente (tag, saldo iniziale, tema...): parte dai default, viene sostituita dai dati salvati appena si fa login (vedi effect sotto). */
   const [config, setConfig] = useState(() => {
     return INITIAL_CONFIG; // Default to initial config
   });
+  /** Tutti i movimenti dell'utente loggato, di tutti gli anni (Dashboard.jsx filtra quelli dell'anno aperto). */
   const [spese, setSpese] = useState([]);
 
   // Caricamento dati specifico per utente al login: sincronizza lo stato React con localStorage
@@ -101,6 +117,9 @@ export default function App() {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // --- PERSISTENZA DATI ---
+  // Salva config e movimenti in localStorage ad ogni modifica (autosave), sotto chiavi
+  // specifiche dell'utente loggato. Nessun debounce: per i volumi di dati di un'app
+  // personale il costo di scrivere ad ogni cambiamento è trascurabile.
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`finance_lab_config_${currentUser}`, JSON.stringify(config));
@@ -113,17 +132,22 @@ export default function App() {
     }
   }, [config, spese, currentUser]);
 
-  const isTauri = () => typeof window !== 'undefined' && !!window.__TAURI__; // Moved here as it's used in backupCartella
+  /** true solo dentro l'app desktop Tauri (mai in un browser normale): usato per nascondere/disabilitare funzioni che richiedono il filesystem, come il backup su cartella. */
+  const isTauri = () => typeof window !== 'undefined' && !!window.__TAURI__;
 
   // --- HOOK FINANZA (LOGICA ESTRATTA) ---
+  // Tutto il "numero-crunching" (saldo, grafici, ricerca) vive in useFinance.js: qui si
+  // passano solo i dati grezzi e si ricevono i risultati già pronti da mostrare.
   const {
     listaAnni, movimentiAnno, saldoAttuale, speseFiltrateRicerca, topTags,
     datiPatrimonioMese, datiTorta
   } = useFinance(spese, config, activeTab, searchTerm);
 
+  /** Palette dei grafici: il primo colore segue sempre il tema scelto dall'utente, gli altri sono quelli fissi di COLORS. */
   const chartColors = useMemo(() => [config.coloreTema, ...COLORS.slice(1)], [config.coloreTema]);
 
   // --- GESTORI EVENTI ---
+  /** Apre il prompt "Nuovo Registro" e, se l'anno inserito è valido (4 cifre) e non già presente, lo aggiunge e ci passa sopra. */
   const aggiungiAnno = () => {
     setModal({
       show: true, type: 'prompt', title: 'Nuovo Registro', msg: 'Inserisci l\'anno da creare:', 
@@ -140,6 +164,7 @@ export default function App() {
     });
   };
 
+  /** Rimuove un registro annuale dalla Sidebar, ma solo se non contiene movimenti (altrimenti si perderebbero dati senza preavviso). */
   const rimuoviAnno = (anno) => {
     if (spese.some(m => m.data.startsWith(anno))) return showToast("L'anno contiene dati. Svuotalo prima.");
     setModal({
@@ -152,6 +177,7 @@ export default function App() {
     });
   };
 
+  /** Handler del file picker "Importa" in Settings.jsx: legge il file scelto e delega il parsing/validazione a importUtils.js. */
   const importaJSON = (e) => {
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -165,6 +191,7 @@ export default function App() {
     reader.readAsText(e.target.files[0]);
   };
 
+  /** Crea una sottocartella di backup vuota (Root/Utente/Anno/backup_<timestamp>) tramite le API filesystem di Tauri. Funziona solo nella versione desktop. */
   const backupCartella = async () => {
     if (!isTauri()) {
       showToast("Solo versione Desktop.");
@@ -185,6 +212,7 @@ export default function App() {
     }
   };
 
+  /** Salva le modifiche del form "Gestione Profilo": rinomina l'utente (migrando i suoi dati salvati) e/o aggiorna l'hash della password. */
   const handleUpdateProfile = async () => {
     const users = JSON.parse(localStorage.getItem('finance_lab_users') || '{}');
     let updatedUsers = { ...users };
@@ -263,6 +291,44 @@ export default function App() {
     });
   };
 
+  /** Applica un aggiornamento parziale a un movimento esistente (usato per tag, allegati...). Condiviso tra Search e Dashboard. */
+  const updateSpesa = (id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s));
+
+  /**
+   * Allega un file a un movimento esistente: apre il selettore file nativo del sistema
+   * operativo (serve Tauri, non è possibile ottenere il percorso reale di un file scelto
+   * tramite <input type="file"> del browser per motivi di sicurezza), ne fa una COPIA dentro
+   * percorsoSalvataggio/backup/<anno del movimento>/, e salva il nome del file sul movimento.
+   * Il file originale scelto dall'utente non viene toccato/spostato, solo copiato.
+   */
+  const allegaFile = async (movimento) => {
+    if (!isTauri()) {
+      showToast("Solo versione Desktop.");
+      return;
+    }
+    try {
+      const { open } = window.__TAURI__.dialog;
+      const { copyFile, createDir } = window.__TAURI__.fs;
+      const { join, basename } = window.__TAURI__.path;
+
+      const sourcePath = await open({ multiple: false });
+      if (!sourcePath) return; // utente ha annullato la selezione
+
+      const nomeFile = await basename(sourcePath);
+      const annoRecord = movimento.data.substring(0, 4);
+      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', annoRecord);
+      await createDir(cartellaAnno, { recursive: true });
+      await copyFile(sourcePath, await join(cartellaAnno, nomeFile));
+
+      updateSpesa(movimento.id, { allegato: nomeFile });
+      showToast("File allegato!");
+    } catch {
+      showToast("Errore durante l'allegato del file.");
+    }
+  };
+
+  // Stili condivisi (l'app non usa CSS Modules/Tailwind: gli stili sono oggetti JS passati
+  // via prop "styles" a tutti i componenti figli, cosi' l'aspetto resta coerente in tutta l'app).
   const s = useMemo(() => ({
     card: { background: '#ffffff', borderRadius: '16px', padding: '20px', border: '1px solid #e2e8f0', marginBottom: '20px' },
     input: { padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
@@ -271,12 +337,16 @@ export default function App() {
     th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#64748b', fontSize: '11px', fontWeight: '800', borderBottom: '2px solid #f1f5f9' }),
   }), []);
 
+  // Senza utente loggato: solo la schermata di login, a schermo intero.
+  // Con utente loggato: layout con Sidebar fissa + area principale, dove viene mostrata
+  // UNA sola vista alla volta in base ad activeTab (Ricerca / Impostazioni / Dashboard di un anno).
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: '#f8fafc', fontFamily: 'Inter, sans-serif', position: 'relative' }}>      
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: '#f8fafc', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
       {!currentUser ? (
         <LoginView onLogin={setCurrentUser} themeColor={config.coloreTema} styles={s} />
       ) : (
         <>
+          {/* Overlay scuro dietro al menu mobile aperto: cliccandolo si chiude */}
           {isMobile && isMenuOpen && <div onClick={() => setIsMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 90, backdropFilter: 'blur(2px)' }} />}
 
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} themeColor={config.coloreTema} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
@@ -291,39 +361,44 @@ export default function App() {
               </div>
             )}
 
+            {/* Card sempre visibile in cima, qualunque sia la vista attiva sotto */}
             <div style={{ ...s.card, background: `linear-gradient(135deg, ${config.coloreTema}, #1e1b4b)`, border: 'none', color: '#fff' }}>
               <span style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8 }}>LIQUIDITÀ ATTUALE</span>
               <h2 style={{ fontSize: '42px', fontWeight: '900', margin: '10px 0' }}>€ {saldoAttuale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</h2>
             </div>
 
             {activeTab === 'ricerca' && (
-              <SearchView 
-                searchTerm={searchTerm} setSearchTerm={setSearchTerm} speseFiltrate={speseFiltrateRicerca} config={config} styles={s} currentUser={currentUser} 
-                onUpdateSpesa={(id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s))} showToast={showToast} // topTags rimosso, non più utilizzato in Search.jsx
+              <SearchView
+                searchTerm={searchTerm} setSearchTerm={setSearchTerm} speseFiltrate={speseFiltrateRicerca} config={config} styles={s}
+                onUpdateSpesa={updateSpesa} showToast={showToast} // topTags/currentUser rimossi, non più utilizzati in Search.jsx
               />
             )}
-            
+
             {activeTab === 'impostazioni' && (
               <SettingsView
-                config={config} setConfig={setConfig} user={{ username: currentUser }}
+                config={config} spese={spese} setConfig={setConfig} user={{ username: currentUser }}
                 updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} styles={s}
                 newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword}
               />
             )}
 
+            {/* activeTab è un anno (es. "2026"): apre il registro di quell'anno.
+                key={activeTab} forza il rimontaggio di DashboardView al cambio anno, cosi'
+                tutto il suo stato interno (form, filtri grafico...) riparte pulito. */}
             {/^\d{4}$/.test(activeTab) && (
               <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Caricamento registro...</div>}>
                 <DashboardView
                   key={activeTab}
-                  anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} currentUser={currentUser} topTags={topTags} showToast={showToast}
+                  anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} topTags={topTags} showToast={showToast}
                   datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta }}
                   onAddSpesa={(newMov) => {
                     const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
                     setSpese(prev => [...prev, { ...newMov, id, importo: Number(newMov.importo) }]);
                     showToast("Movimento registrato!");
                   }}
-                  onUpdateSpesa={(id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s))}
+                  onUpdateSpesa={updateSpesa}
                   onRemoveSpesa={handleRemoveSpesaWithUndo}
+                  onAllegaFile={allegaFile}
                 />
               </Suspense>
             )}

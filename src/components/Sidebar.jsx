@@ -1,6 +1,11 @@
+// Menu di navigazione laterale: Impostazioni, Ricerca Globale e un pulsante per ogni
+// registro annuale (anni). Componente "dumb": non tiene stato proprio ne' calcola nulla,
+// riceve tutto da App.jsx (activeTab, elenco anni...) e si limita a notificare i click
+// tramite le callback ricevute come props (onTabChange, onAddAnno, onRemoveAnno, onLogout).
 import { Calendar, LayoutDashboard, LogOut, PlusCircle, Search, Settings, Trash2, User } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRemoveAnno, onLogout, currentUser, themeColor, isMobile, isOpen, setIsOpen }) {
+  /** Stile di una voce di menu: sfondo pieno del colore tema se è quella attiva, altrimenti trasparente. */
   const sidebarItemStyle = (active) => ({
     display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
     borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '600',
@@ -10,21 +15,24 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
   });
 
   return (
-    <aside style={{ 
-      width: '250px', 
+    // Da mobile (isMobile) diventa un pannello a scomparsa: fixed e spostato fuori
+    // schermo (left: -250px) finché isOpen non è true; da desktop resta sempre visibile
+    // e "sticky" (scorre con la pagina restando in vista).
+    <aside style={{
+      width: '250px',
       flexShrink: 0,
       alignSelf: 'stretch',
-      backgroundColor: '#0f172a', 
-      color: '#fff', 
-      position: isMobile ? 'fixed' : 'sticky', 
-      top: 0, 
+      backgroundColor: '#0f172a',
+      color: '#fff',
+      position: isMobile ? 'fixed' : 'sticky',
+      top: 0,
       height: '100vh',
-      padding: '30px 20px', 
-      boxSizing: 'border-box', 
+      padding: '30px 20px',
+      boxSizing: 'border-box',
       zIndex: 100,
       display: 'flex',
       flexDirection: 'column',
-      left: isMobile && !isOpen ? '-250px' : '0', 
+      left: isMobile && !isOpen ? '-250px' : '0',
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       boxShadow: isMobile ? '5px 0 15px -5px rgba(0,0,0,0.3)' : 'none',
       overflowY: 'auto'
@@ -45,7 +53,8 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
           <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '800' }}>REGISTRI</span>
           <PlusCircle size={20} color={themeColor} cursor="pointer" onClick={onAddAnno}/>
         </div>
-        
+
+        {/* Un pulsante per ogni anno attivo: apre il registro (onTabChange) o lo rimuove (onRemoveAnno, bloccato da App.jsx se contiene dati) */}
         {anni.map(anno => (
           <div key={anno} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <button 

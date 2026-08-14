@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { FileText, Search, Tag, X } from 'lucide-react';
 
 /**
- * SearchView: Vista dedicata alla ricerca globale nell'archivio.
- * Permette il filtraggio per testo e l'aggiunta rapida di tag tramite Drag & Drop.
+ * SearchView: ricerca testuale su TUTTI i movimenti dell'utente, di tutti gli anni
+ * (a differenza di Dashboard.jsx che mostra solo l'anno aperto). Il filtro vero e
+ * proprio (speseFiltrate) è già calcolato da useFinance.js in base a searchTerm;
+ * questo componente si occupa solo di mostrare i risultati e di un'azione in più:
+ * selezionare più righe e applicarci in blocco uno o più tag della libreria.
  */
-export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, currentUser, onUpdateSpesa, showToast }) {
-  const [selectedLibraryTags, setSelectedLibraryTags] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [animatedRowId, setAnimatedRowId] = useState(null); // Nuovo stato per l'animazione
+export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, onUpdateSpesa, showToast }) {
+  const [selectedLibraryTags, setSelectedLibraryTags] = useState([]); // tag scelti dalla "libreria" da applicare in blocco
+  const [selectedRows, setSelectedRows] = useState([]); // id dei movimenti selezionati con le checkbox
+  const [animatedRowId, setAnimatedRowId] = useState(null); // id della riga appena aggiornata, per un breve effetto di evidenziazione
 
+  /** Aggiunge tutti i tag selezionati (senza duplicarli) a tutte le righe selezionate, poi svuota le selezioni. */
   const applyTagsToSelected = () => {
     if (selectedLibraryTags.length === 0 || selectedRows.length === 0) return;
     
@@ -53,6 +57,8 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
           )}
         </div>
         
+        {/* Libreria tag: cliccando qui si scelgono i tag da applicare in blocco; le checkbox
+            in tabella sotto scelgono a quali movimenti applicarli (bottone "APPLICA AI SELEZIONATI") */}
         <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <span style={{ ...styles.label, fontSize: '10px' }}>LIBRERIA TAG (Seleziona uno o più tag da associare):</span>
           {['entrata', 'uscita', 'neutro'].map(tipo => (
@@ -124,7 +130,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   </td>
                   <td style={{ padding: '16px 20px', fontSize:'14px' }}>
                     <div style={{fontWeight:600}}>{mov.nota}</div>
-                    {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{mov.data.substring(0,4)}/.../{mov.allegato}</div>}
+                    {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}} title="Percorso reale del file copiato da allegaFile"><FileText size={10}/> {config.percorsoSalvataggio}/backup/{mov.data.substring(0,4)}/{mov.allegato}</div>}
                     {mov.valoreSecondario != null && (
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                         {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}

@@ -1,9 +1,19 @@
+// Logica di hashing/verifica delle password degli account locali (usata da Login.jsx).
+// Le password non vengono mai salvate in chiaro: qui vengono trasformate in un hash
+// derivato con PBKDF2 e un salt casuale per utente, tramite la Web Crypto API del browser
+// (nessuna libreria esterna necessaria). I record utente vivono in localStorage
+// (chiave "finance_lab_users"), gestiti da Login.jsx.
+
+// Numero di iterazioni PBKDF2: più alto = più lento da forzare (brute force), ma anche
+// più lento da calcolare ad ogni login. 100.000 è un compromesso comune per uso client-side.
 const PBKDF2_ITERATIONS = 100000;
 
+/** Converte un array di byte nella sua rappresentazione esadecimale (stringa), per poterlo salvare come testo in localStorage/JSON. */
 function bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** Operazione inversa di bytesToHex: da stringa esadecimale (es. il salt salvato) torna a un array di byte utilizzabile da crypto.subtle. */
 function hexToBytes(hex) {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);

@@ -2,14 +2,21 @@ import { useState } from 'react';
 import { Download, FolderArchive, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
 
 /**
- * SettingsView: Gestisce le configurazioni globali dell'applicazione.
- * Include gestione del percorso file, manutenzione (import/export), profilo utente e libreria tag.
+ * SettingsView: quattro sezioni indipendenti, tutte agiscono sull'oggetto "config"
+ * passato da App.jsx (che lo salva in localStorage ad ogni modifica, vedi App.jsx):
+ * 1. Parametri Base - saldo/data di partenza per il calcolo del saldo, colore tema.
+ * 2. Percorso di Lavoro - cartella di backup (solo admin puo' cambiarla) + import/export/backup.
+ * 3. Gestione Profilo - cambio username/password (la vera logica è in App.jsx: handleUpdateProfile).
+ * 4. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
+ *    poi ciò che useFinance.js usa per decidere se un movimento aumenta o riduce il saldo.
  */
-export default function SettingsView({ config, setConfig, user, updateProfile, importaJSON, backupCartella, styles, newUsername, setNewUsername, newPassword, setNewPassword }) {
+export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, styles, newUsername, setNewUsername, newPassword, setNewPassword }) {
   const isAdmin = user.username === 'admin';
   const [nuovoTag, setNuovaTag] = useState('');
+  /** Il percorso di backup è di sola lettura finché l'admin non lo sblocca esplicitamente col lucchetto, per evitare modifiche accidentali. */
   const [bloccaPercorso, setBloccaPercorso] = useState(true);
 
+  /** Click sul pallino colorato di un tag: fa scorrere il suo tipo tra entrata -> uscita -> neutro -> (di nuovo entrata). */
   const toggleTipoCategoria = (nome) => {
     const tipi = ['entrata', 'uscita', 'neutro'];
     const nuoviTags = config.tags.map(c => {
@@ -65,7 +72,8 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
 
         <h3>Manutenzione Archivio</h3>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Download size={18}/> Esporta</button>
+          {/* Esporta: genera al volo un file JSON scaricabile con config + tutti i movimenti, nello stesso formato atteso da importaJSON/parseImportedData */}
+          <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config, spese})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Download size={18}/> Esporta</button>
           <label style={{...styles.btn('#475569'), cursor:'pointer', flex:1, justifyContent:'center'}}><Upload size={18}/> Importa <input type="file" style={{display:'none'}} onChange={importaJSON}/></label>
           <button onClick={backupCartella} style={{...styles.btn('#f59e0b'), flex:1, justifyContent:'center'}}><FolderArchive size={18}/> Backup Cartella</button>
         </div>
@@ -90,6 +98,7 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
 
       <div style={styles.card}>
         <h3>Gestione Tag</h3>
+        {/* Un nuovo tag nasce sempre di tipo "uscita" di default; il tipo si cambia dopo cliccando il suo pallino colorato */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
           <input type="text" value={nuovoTag} onChange={e=>setNuovaTag(e.target.value)} style={styles.input} placeholder="Aggiungi tag..."/>
           <button onClick={()=>{if(nuovoTag){setConfig({...config, tags:[...config.tags, {nome:nuovoTag.toLowerCase(), tipo:'uscita'}]}); setNuovaTag('')}}} style={{...styles.btn(config.coloreTema), width:'auto'}}>Crea Tag</button>

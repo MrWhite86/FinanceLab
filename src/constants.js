@@ -1,3 +1,18 @@
+// Valori di default e palette colori condivisi da tutta l'app.
+// Non c'è logica qui dentro: sono solo dati statici, separati dal codice per essere
+// facili da ritrovare e modificare senza scavare tra i componenti.
+
+/**
+ * Configurazione iniziale di un nuovo utente (usata da App.jsx finché non viene
+ * sovrascritta dai dati salvati in localStorage per quello specifico utente).
+ * - saldoStatoZero / dataStatoZero: il saldo di partenza da cui useFinance.js parte
+ *   a sommare/sottrarre i movimenti per calcolare la liquidità attuale.
+ * - coloreTema: colore principale dell'interfaccia (bottoni, grafici, header).
+ * - percorsoSalvataggio: cartella di default per il backup locale (solo versione desktop Tauri).
+ * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
+ *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
+ * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
+ */
 export const INITIAL_CONFIG = {
   saldoStatoZero: 10000,
   dataStatoZero: '2024-01-01',
@@ -13,4 +28,10 @@ export const INITIAL_CONFIG = {
   anniAttivi: ['2026', '2025', '2024']
 };
 
+/**
+ * Palette di colori usata a rotazione nei grafici (grafico a torta, andamento tag)
+ * quando serve un colore diverso per ogni serie/categoria mostrata.
+ * In App.jsx il primo colore viene sostituito dinamicamente con config.coloreTema,
+ * cosi' il grafico principale segue sempre il tema scelto dall'utente.
+ */
 export const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];

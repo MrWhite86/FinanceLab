@@ -3,14 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ["@tauri-apps/api/tauri"]
-  },
-  build: {
-    rollupOptions: {
-      external: ["@tauri-apps/api/tauri"]
-    }
-  },
   test: {
     environment: 'jsdom',
     globals: true,
