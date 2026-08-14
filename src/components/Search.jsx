@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import * as Lucide from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Search, Tag, X } from 'lucide-react';
 
 /**
  * SearchView: Vista dedicata alla ricerca globale nell'archivio.
  * Permette il filtraggio per testo e l'aggiunta rapida di tag tramite Drag & Drop.
  */
-export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, currentUser, topTags, onUpdateSpesa, showToast }) {
+export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, currentUser, onUpdateSpesa, showToast }) {
   const [selectedLibraryTags, setSelectedLibraryTags] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [animatedRowId, setAnimatedRowId] = useState(null); // Nuovo stato per l'animazione
@@ -34,9 +34,9 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ ...styles.card, marginBottom: 0 }}>
-        <h2 style={{ fontWeight: '900', fontSize: '26px', marginBottom: '20px' }}>Ricerca nell'Archivio</h2>
+        <h2 style={{ fontWeight: '900', fontSize: '26px', marginBottom: '20px' }}>Ricerca nell&rsquo;Archivio</h2>
         <div style={{ position: 'relative' }}>
-          <Lucide.Search size={20} style={{ position: 'absolute', left: '15px', top: '15px', color: '#94a3b8' }} />
+          <Search size={20} style={{ position: 'absolute', left: '15px', top: '15px', color: '#94a3b8' }} />
           <input 
             type="text" 
             placeholder="Cerca per nota, categoria o data (es: 2024)..." 
@@ -45,7 +45,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
             style={{ ...styles.input, width: '100%', paddingLeft: '50px', fontSize: '16px', boxSizing: 'border-box' }}
           />
           {searchTerm && (
-            <Lucide.X 
+            <X 
               size={20} 
               onClick={() => setSearchTerm('')} 
               style={{ position: 'absolute', right: '15px', top: '15px', color: '#94a3b8', cursor: 'pointer' }} 
@@ -70,7 +70,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                     boxShadow: selectedLibraryTags.includes(t.nome) ? `0 0 8px ${config.coloreTema}40` : 'none'
                   }}
                 >
-                  <Lucide.Tag size={10} style={{ opacity: 0.4 }} />
+                  <Tag size={10} style={{ opacity: 0.4 }} />
                   {t.nome.toUpperCase()}
                 </div>
               ))}
@@ -124,7 +124,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   </td>
                   <td style={{ padding: '16px 20px', fontSize:'14px' }}>
                     <div style={{fontWeight:600}}>{mov.nota}</div>
-                    {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><Lucide.FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{mov.data.substring(0,4)}/.../{mov.allegato}</div>}
+                    {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{mov.data.substring(0,4)}/.../{mov.allegato}</div>}
                     {mov.valoreSecondario != null && (
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                         {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}

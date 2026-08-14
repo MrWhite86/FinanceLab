@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import * as Lucide from 'lucide-react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line, BarChart, Bar, Legend, PieChart, Pie, Cell 
+import { useState, useMemo } from 'react';
+import { BarChart2, BarChart3, Check, FileText, PieChart as PieChartIcon, Plus, Tag, Trash2, TrendingUp, X } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, BarChart, Bar, Legend, PieChart, Pie, Cell
 } from 'recharts';
 
 /** Tooltip Personalizzato Dark Glassmorphism per Grafici */
@@ -74,14 +74,6 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
   const [selectedLibraryTags, setSelectedLibraryTags] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [animatedRowId, setAnimatedRowId] = useState(null);
-
-  /** Il componente non viene rimontato al cambio di registro/anno: azzera il form quando cambia "anno" */
-  useEffect(() => {
-    setNuovaSpesa({ importo: '', tags: [], data: `${anno}-01-01`, nota: '', allegato: null, valoreSecondario: '', etichettaSecondaria: '' });
-    setShowValoreSecondario(false);
-    setSelectedLibraryTags([]);
-    setSelectedRows([]);
-  }, [anno]);
 
   /** Modalità di visualizzazione grafico (Linee vs Barre) */
   const [chartType, setChartType] = useState('line'); // 'line' | 'bar'
@@ -195,7 +187,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#1e293b' }}>Andamento Tag Personalizzati</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona i tag per tracciarne e confrontarne l'evoluzione mensile</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona i tag per tracciarne e confrontarne l&rsquo;evoluzione mensile</span>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -205,13 +197,13 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     onClick={() => setChartType('line')}
                     style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', background: chartType === 'line' ? '#fff' : 'transparent', color: chartType === 'line' ? config.coloreTema : '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
-                    <Lucide.TrendingUp size={14} /> Linee
+                    <TrendingUp size={14} /> Linee
                   </button>
                   <button 
                     onClick={() => setChartType('bar')}
                     style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', background: chartType === 'bar' ? '#fff' : 'transparent', color: chartType === 'bar' ? config.coloreTema : '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
-                    <Lucide.BarChart3 size={14} /> Barre
+                    <BarChart3 size={14} /> Barre
                   </button>
                 </div>
 
@@ -283,9 +275,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                               transform: isSelected ? 'scale(1.03)' : 'scale(1)'
                             }}
                           >
-                            <Lucide.Tag size={12} style={{ opacity: isSelected ? 0.9 : 0.4 }} />
+                            <Tag size={12} style={{ opacity: isSelected ? 0.9 : 0.4 }} />
                             {t.nome.toUpperCase()}
-                            {isSelected && <Lucide.Check size={12} />}
+                            {isSelected && <Check size={12} />}
                           </div>
                         );
                       })}
@@ -298,9 +290,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {/* Grafico (Linee o Barre) o Messaggio Stato Vuoto */}
             {selectedTagsForAnalysis.length === 0 ? (
               <div style={{ padding: '50px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
-                <Lucide.BarChart2 size={40} color="#94a3b8" style={{ marginBottom: '12px' }} />
+                <BarChart2 size={40} color="#94a3b8" style={{ marginBottom: '12px' }} />
                 <p style={{ margin: 0, fontWeight: '800', fontSize: '15px', color: '#1e293b' }}>Nessun tag selezionato</p>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona uno o più tag in alto per visualizzare l'andamento nel grafico.</span>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona uno o più tag in alto per visualizzare l&rsquo;andamento nel grafico.</span>
               </div>
             ) : (
               <>
@@ -406,7 +398,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
               <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h4 style={{ margin: 0, fontWeight: '800', fontSize: '16px', color: '#1e293b' }}>Ripartizione Uscite per Tag</h4>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Suddivisione percentuale delle spese dell'anno</span>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>Suddivisione percentuale delle spese dell&rsquo;anno</span>
                 </div>
                 {totaleUsciteAnno > 0 && (
                   <span style={{ fontSize: '12px', fontWeight: '800', padding: '4px 10px', background: '#fee2e2', color: '#ef4444', borderRadius: '8px' }}>
@@ -441,7 +433,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 </div>
               ) : (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                  <Lucide.PieChart size={40} style={{ marginBottom: '10px' }} />
+                  <PieChartIcon size={40} style={{ marginBottom: '10px' }} />
                   <span style={{ fontSize: '13px', fontWeight: '600' }}>Nessuna spesa registrata per il {anno}</span>
                 </div>
               )}
@@ -483,7 +475,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 onClick={() => setShowValoreSecondario(true)}
                 style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
               >
-                <Lucide.Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
+                <Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
               </button>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
@@ -495,7 +487,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   <label style={styles.label}>ETICHETTA (es. Lordo)</label>
                   <input type="text" value={nuovaSpesa.etichettaSecondaria} onChange={e => setNuovaSpesa({ ...nuovaSpesa, etichettaSecondaria: e.target.value })} style={styles.input} placeholder="Lordo" />
                 </div>
-                <Lucide.X
+                <X
                   size={18}
                   color="#94a3b8"
                   style={{ cursor: 'pointer', marginBottom: '12px' }}
@@ -531,7 +523,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                           transform: selectedLibraryTags.includes(t.nome) ? 'scale(1.05)' : 'scale(1)'
                         }}
                       >
-                        <Lucide.Tag size={10} style={{ opacity: 0.4 }} />
+                        <Tag size={10} style={{ opacity: 0.4 }} />
                         {t.nome.toUpperCase()}
                       </div>
                     ))}
@@ -593,13 +585,13 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}>
                             {t.toUpperCase()}
-                            <Lucide.X size={10} />
+                            <X size={10} />
                           </span>
                         ))}
                       </td>
                       <td style={{ padding: '16px 20px' }}>
                         <div style={{fontWeight:600}}>{mov.nota}</div>
-                        {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><Lucide.FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{mov.allegato}</div>}
+                        {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}}><FileText size={10}/> {config.percorsoSalvataggio}/{currentUser}/{anno}/.../{mov.allegato}</div>}
                         {mov.valoreSecondario != null && (
                           <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                             {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
@@ -608,7 +600,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       </td>
                       <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>€ {Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</td>
                       <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <Lucide.Trash2 size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => onRemoveSpesa(mov.id)} />
+                        <Trash2 size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => onRemoveSpesa(mov.id)} />
                       </td>
                     </tr>
                   );

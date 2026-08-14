@@ -1,5 +1,4 @@
-import React from 'react';
-import * as Lucide from 'lucide-react';
+import { Calendar, LayoutDashboard, LogOut, PlusCircle, Search, Settings, Trash2, User } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRemoveAnno, onLogout, currentUser, themeColor, isMobile, isOpen, setIsOpen }) {
   const sidebarItemStyle = (active) => ({
@@ -31,20 +30,20 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
       overflowY: 'auto'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', padding: '0 10px' }}>
-        <Lucide.LayoutDashboard color={themeColor} size={28} />
+        <LayoutDashboard color={themeColor} size={28} />
         <h1 style={{ fontSize: '18px', fontWeight: '900' }}>FinanceLab</h1>
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
         <button onClick={() => { onTabChange('impostazioni'); if(isMobile) setIsOpen(false); }} style={sidebarItemStyle(activeTab === 'impostazioni')}>
-          <Lucide.Settings size={18}/> Impostazioni
+          <Settings size={18}/> Impostazioni
         </button>
         <button onClick={() => { onTabChange('ricerca'); if(isMobile) setIsOpen(false); }} style={sidebarItemStyle(activeTab === 'ricerca')}>
-          <Lucide.Search size={18}/> Ricerca Globale
+          <Search size={18}/> Ricerca Globale
         </button>
 
         <div style={{ padding: '25px 10px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '800' }}>REGISTRI</span>
-          <Lucide.PlusCircle size={20} color={themeColor} cursor="pointer" onClick={onAddAnno}/>
+          <PlusCircle size={20} color={themeColor} cursor="pointer" onClick={onAddAnno}/>
         </div>
         
         {anni.map(anno => (
@@ -53,9 +52,9 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
               onClick={() => { onTabChange(anno); if(isMobile) setIsOpen(false); }} 
               style={{ ...sidebarItemStyle(activeTab === anno), flex: 1 }}
             >
-              <Lucide.Calendar size={16}/> {anno}
+              <Calendar size={16}/> {anno}
             </button>
-            <Lucide.Trash2 
+            <Trash2 
               size={16} color="#334155" 
               style={{ cursor: 'pointer', opacity: 0.6, padding: '8px' }} 
               onClick={() => onRemoveAnno(anno)}
@@ -65,9 +64,9 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
 
         <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #1e293b' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', color: '#94a3b8', fontSize: '13px' }}>
-            <Lucide.User size={16} /> {currentUser?.toUpperCase()}
+            <User size={16} /> {currentUser?.toUpperCase()}
           </div>
-          <button onClick={onLogout} style={{ padding: '12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Lucide.LogOut size={18}/> Logout</button>
+          <button onClick={onLogout} style={{ padding: '12px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><LogOut size={18}/> Logout</button>
         </div>
       </nav>
     </aside>

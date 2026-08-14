@@ -1,5 +1,4 @@
-import React from 'react';
-import * as Lucide from 'lucide-react';
+import { Info, X } from 'lucide-react';
 
 export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
   <div style={{ 
@@ -8,7 +7,7 @@ export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
     boxShadow: '0 10px 25px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '14px', 
     animation: 'slideIn 0.3s ease-out', border: '1px solid #1e293b' 
   }}>
-    <Lucide.Info size={18} color="#60a5fa" />
+    <Info size={18} color="#60a5fa" />
     <span style={{ fontSize: '14px', fontWeight: 600 }}>
       {typeof message === 'object' ? message.text : message}
     </span>
@@ -30,7 +29,7 @@ export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
         {undoLabel}
       </button>
     )}
-    <Lucide.X size={16} onClick={onClose} style={{ cursor: 'pointer', opacity: 0.7 }} />
+    <X size={16} onClick={onClose} style={{ cursor: 'pointer', opacity: 0.7 }} />
   </div>
 );
 

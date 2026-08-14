@@ -1,15 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import * as Lucide from 'lucide-react';
-
-/** Funzione per l'hashing sicuro delle password tramite SHA-256 */
-async function hashPassword(pwd) {
-  if (!pwd) return '';
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pwd);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, User, CheckCircle2 } from 'lucide-react';
+import { derivePasswordRecord, verifyPassword, isLegacyRecord } from '../authUtils';
 
 export default function Login({ onLogin, themeColor, styles }) {
   const [users, setUsers] = useState({});
@@ -18,8 +9,7 @@ export default function Login({ onLogin, themeColor, styles }) {
     const initializeUsers = async () => {
       const storedUsers = JSON.parse(localStorage.getItem('finance_lab_users') || '{}');
       if (!storedUsers.admin) {
-        // Hashing della password predefinita "admin" per testing
-        storedUsers.admin = await hashPassword('admin');
+        storedUsers.admin = await derivePasswordRecord('admin');
         localStorage.setItem('finance_lab_users', JSON.stringify(storedUsers));
       }
       setUsers(storedUsers);
@@ -27,21 +17,18 @@ export default function Login({ onLogin, themeColor, styles }) {
     initializeUsers();
   }, []);
 
+  // Ricorda solo quali username sono stati usati di recente, mai la password: niente testo in chiaro in localStorage.
   const remembered = JSON.parse(localStorage.getItem('finance_lab_remembered') || '{}');
 
   const [authMode, setAuthMode] = useState('login');
-  const [credentials, setCredentials] = useState({ 
-    username: 'admin', 
-    password: remembered.admin || '' 
-  });
+  const [credentials, setCredentials] = useState({ username: 'admin', password: '' });
   const [rememberMe, setRememberMe] = useState(!!remembered.admin);
 
   const userList = Object.keys(users);
 
   const handleSelectProfile = (name) => {
-    const savedPassword = remembered[name] || '';
-    setCredentials({ username: name, password: savedPassword });
-    setRememberMe(!!savedPassword);
+    setCredentials({ username: name, password: '' });
+    setRememberMe(!!remembered[name]);
   };
 
   const handleAuth = async () => {
@@ -51,34 +38,31 @@ export default function Login({ onLogin, themeColor, styles }) {
       return;
     }
 
-    const hashedInput = await hashPassword(password);
-
     if (authMode === 'registro') {
       if (users[username]) {
         alert("Utente già esistente.");
         return;
       }
-      const updatedUsers = { ...users, [username]: hashedInput };
+      const updatedUsers = { ...users, [username]: await derivePasswordRecord(password) };
       localStorage.setItem('finance_lab_users', JSON.stringify(updatedUsers));
       setUsers(updatedUsers);
       alert("Registrazione completata! Ora puoi accedere.");
       setAuthMode('login');
     } else {
-      const storedPass = users[username];
-      // Verifica hash; tollera anche una password ancora salvata in chiaro per migrarla all'hash
-      const isValid = storedPass === hashedInput || storedPass === password;
+      const storedRecord = users[username];
+      const isValid = await verifyPassword(password, storedRecord);
 
       if (isValid) {
-        // Se la password era memorizzata in chiaro, migrala automaticamente all'hash SHA-256
-        if (storedPass === password) {
-          const migratedUsers = { ...users, [username]: hashedInput };
+        // Se l'account usava ancora il formato pre-salt, migralo al login
+        if (isLegacyRecord(storedRecord)) {
+          const migratedUsers = { ...users, [username]: await derivePasswordRecord(password) };
           localStorage.setItem('finance_lab_users', JSON.stringify(migratedUsers));
           setUsers(migratedUsers);
         }
 
         const newRemembered = JSON.parse(localStorage.getItem('finance_lab_remembered') || '{}');
         if (rememberMe) {
-          newRemembered[username] = password;
+          newRemembered[username] = true;
         } else {
           delete newRemembered[username];
         }
@@ -99,7 +83,7 @@ export default function Login({ onLogin, themeColor, styles }) {
       <div style={{ ...styles.card, width: '90%', maxWidth: '440px', padding: '40px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
           <div style={{ background: `${themeColor}15`, padding: '15px', borderRadius: '20px' }}>
-            <Lucide.LayoutDashboard color={themeColor} size={48} />
+            <LayoutDashboard color={themeColor} size={48} />
           </div>
         </div>
         <h2 style={{ marginBottom: '8px', fontSize: '26px', fontWeight: '900', color: '#1e293b' }}>
@@ -119,9 +103,9 @@ export default function Login({ onLogin, themeColor, styles }) {
                   onClick={() => handleSelectProfile(name)}
                   style={{ padding: '8px 12px', background: credentials.username === name ? `${themeColor}20` : '#f1f5f9', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${credentials.username === name ? themeColor : '#e2e8f0'}`, display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
                 >
-                  <Lucide.User size={14} color={credentials.username === name ? themeColor : '#64748b'} />
+                  <User size={14} color={credentials.username === name ? themeColor : '#64748b'} />
                   <span style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>{name}</span>
-                  {remembered[name] && <Lucide.CheckCircle2 size={12} color="#10b981" />}
+                  {remembered[name] && <CheckCircle2 size={12} color="#10b981" />}
                 </div>
               ))}
             </div>
@@ -145,7 +129,7 @@ export default function Login({ onLogin, themeColor, styles }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setRememberMe(!rememberMe)}>
             <input type="checkbox" checked={rememberMe} onChange={() => {}} style={{ cursor: 'pointer' }} />
-            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Ricorda le credenziali</span>
+            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Ricorda nome utente (la password va sempre reinserita)</span>
           </div>
           <button onClick={handleAuth} style={{...styles.btn(themeColor), justifyContent: 'center', width: '100%', marginTop: '10px'}}>
             {authMode === 'login' ? 'ACCEDI AL PORTALE' : 'CREA PROFILO'}

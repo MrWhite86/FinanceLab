@@ -1,0 +1,11 @@
+{
+  "config": {
+    "tags": [{ "nome": "varie", "tipo": "uscita" }]
+  },
+  "spese": [
+    { "id": "1", "data": "2026-03-01", "importo": 20, "tags": ["varie"], "nota": "Valido" },
+    { "id": "2", "importo": 15, "tags": ["varie"], "nota": "Senza data" },
+    { "id": "3", "data": "2026-03-02", "importo": "non-un-numero", "tags": ["varie"], "nota": "Importo non numerico" },
+    { "id": "4", "data": "non-una-data", "importo": 10, "tags": ["varie"], "nota": "Data malformata" }
+  ]
+}

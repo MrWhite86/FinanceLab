@@ -16,6 +16,8 @@ jobs:
           node-version: 18
       - name: install frontend dependencies
         run: npm ci
+      - name: lint
+        run: npm run lint
       - name: run tests
         run: npm test
       - name: build frontend

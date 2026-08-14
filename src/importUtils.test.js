@@ -36,4 +36,12 @@ describe('parseImportedData', () => {
   it('lancia un errore su un file JSON corrotto, cosi il chiamante puo mostrare "File corrotto."', () => {
     expect(() => parseImportedData(fixture('import-corrotto.json'))).toThrow();
   });
+
+  it('scarta i movimenti senza data valida o senza importo numerico, senza far crashare l\'import', () => {
+    const { spese, skippedCount } = parseImportedData(fixture('import-parzialmente-invalido.json'));
+
+    expect(spese).toHaveLength(1);
+    expect(spese[0].nota).toBe('Valido');
+    expect(skippedCount).toBe(3);
+  });
 });

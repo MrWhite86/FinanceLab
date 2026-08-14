@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import * as Lucide from 'lucide-react';
+import { useState } from 'react';
+import { Download, FolderArchive, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
 
 /**
  * SettingsView: Gestisce le configurazioni globali dell'applicazione.
@@ -57,7 +57,7 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
             <input type="text" value={isAdmin ? config.percorsoSalvataggio : `${config.percorsoSalvataggio}/${user.username}`} onChange={e => isAdmin && setConfig({ ...config, percorsoSalvataggio: e.target.value })} style={{ ...styles.input, background: (!isAdmin || bloccaPercorso) ? '#f1f5f9' : '#fff', color: (!isAdmin || bloccaPercorso) ? '#94a3b8' : '#000', flex: 1 }} disabled={!isAdmin || bloccaPercorso} />
             {isAdmin && (
               <button onClick={() => setBloccaPercorso(!bloccaPercorso)} style={{background:'transparent', border:'none', cursor:'pointer', color: bloccaPercorso ? '#94a3b8' : config.coloreTema, fontWeight:700}}>
-                {bloccaPercorso ? <Lucide.Lock size={18}/> : <Lucide.Unlock size={18}/>}
+                {bloccaPercorso ? <Lock size={18}/> : <Unlock size={18}/>}
               </button>
             )}
           </div>
@@ -65,9 +65,9 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
 
         <h3>Manutenzione Archivio</h3>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Lucide.Download size={18}/> Esporta</button>
-          <label style={{...styles.btn('#475569'), cursor:'pointer', flex:1, justifyContent:'center'}}><Lucide.Upload size={18}/> Importa <input type="file" style={{display:'none'}} onChange={importaJSON}/></label>
-          <button onClick={backupCartella} style={{...styles.btn('#f59e0b'), flex:1, justifyContent:'center'}}><Lucide.FolderArchive size={18}/> Backup Cartella</button>
+          <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Download size={18}/> Esporta</button>
+          <label style={{...styles.btn('#475569'), cursor:'pointer', flex:1, justifyContent:'center'}}><Upload size={18}/> Importa <input type="file" style={{display:'none'}} onChange={importaJSON}/></label>
+          <button onClick={backupCartella} style={{...styles.btn('#f59e0b'), flex:1, justifyContent:'center'}}><FolderArchive size={18}/> Backup Cartella</button>
         </div>
       </div>
 
@@ -84,7 +84,7 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
           </div>
         </div>
         <button onClick={updateProfile} style={{ ...styles.btn(config.coloreTema), width: 'auto', marginTop: '20px' }}>
-          <Lucide.Save size={18}/> Salva Modifiche Profilo
+          <Save size={18}/> Salva Modifiche Profilo
         </button>
       </div>
 
@@ -101,7 +101,7 @@ export default function SettingsView({ config, setConfig, user, updateProfile, i
               <button onClick={() => toggleTipoCategoria(c.nome)} style={dotStyle(c.tipo)}>
                 {c.tipo === 'entrata' ? '+' : c.tipo === 'uscita' ? '-' : 'o'}
               </button>
-              <Lucide.Trash2 size={14} color="#cbd5e1" cursor="pointer" onClick={()=>{
+              <Trash2 size={14} color="#cbd5e1" cursor="pointer" onClick={()=>{
                 setConfig({...config, tags: config.tags.filter(x=>x.nome!==c.nome)});
               }}/>
             </div>

@@ -3,17 +3,20 @@
  * Gestisce l'autenticazione, la persistenza dei dati e la navigazione principale.
 */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import * as Lucide from 'lucide-react';
+import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import { Toast, Modal } from './components/UI';
 import LoginView from './components/Login';
 import SearchView from './components/Search';
 import SettingsView from './components/Settings';
-import DashboardView from './components/Dashboard';
 import { useFinance } from './useFinance';
 import { INITIAL_CONFIG, COLORS } from './constants';
 import { parseImportedData } from './importUtils';
+
+// Dashboard include recharts (libreria di grafici pesante): caricata solo quando serve davvero,
+// non al primo avvio dell'app (login/impostazioni/ricerca non ne hanno bisogno).
+const DashboardView = lazy(() => import('./components/Dashboard'));
 
 export default function App() {
   // --- STATO DELL'APPLICAZIONE ---
@@ -30,7 +33,6 @@ export default function App() {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [activeTab, setActiveTab] = useState('impostazioni');
-  const [viewMode, setViewMode] = useState('dati');
   const [searchTerm, setSearchTerm] = useState('');
 
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -50,7 +52,9 @@ export default function App() {
   });
   const [spese, setSpese] = useState([]);
 
-  // Caricamento dati specifico per utente al login
+  // Caricamento dati specifico per utente al login: sincronizza lo stato React con localStorage
+  // (sistema esterno) ogni volta che cambia l'utente loggato, in un componente che non si rimonta.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (currentUser) {
       const savedConfig = localStorage.getItem(`finance_lab_config_${currentUser}`);
@@ -94,6 +98,7 @@ export default function App() {
       setNewPassword('');
     }
   }, [currentUser]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // --- PERSISTENZA DATI ---
   useEffect(() => {
@@ -151,11 +156,11 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const { config: cfg, spese: speseMigrate } = parseImportedData(ev.target.result);
+        const { config: cfg, spese: speseMigrate, skippedCount } = parseImportedData(ev.target.result);
         if (cfg) setConfig(cfg);
         if (speseMigrate) setSpese(speseMigrate);
-        showToast("Dati importati!");
-      } catch (err) { showToast("File corrotto."); }
+        showToast(skippedCount > 0 ? `Dati importati (${skippedCount} record scartati: data o importo non validi).` : "Dati importati!");
+      } catch { showToast("File corrotto."); }
     };
     reader.readAsText(e.target.files[0]);
   };
@@ -175,7 +180,7 @@ export default function App() {
       const fullPath = await join(config.percorsoSalvataggio, currentUser, annoRif, `backup_${ts}`);
       await createDir(fullPath, { recursive: true });
       showToast("Backup completato!");
-    } catch (e) { 
+    } catch {
       showToast("Errore permessi backup.");
     }
   };
@@ -280,7 +285,7 @@ export default function App() {
             {isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
                 <button onClick={() => setIsMenuOpen(true)} style={{ background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer', padding: '10px', borderRadius: '12px', display: 'flex' }}> 
-                  <Lucide.Menu size={24} color="#1e293b" />
+                  <Menu size={24} color="#1e293b" />
                 </button>
                 <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', margin: 0 }}>FinanceLab</h1>
               </div>
@@ -307,17 +312,20 @@ export default function App() {
             )}
 
             {/^\d{4}$/.test(activeTab) && (
-              <DashboardView
-                anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} currentUser={currentUser} topTags={topTags} showToast={showToast}
-                datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta }}
-                onAddSpesa={(newMov) => {
-                  const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
-                  setSpese(prev => [...prev, { ...newMov, id, importo: Number(newMov.importo) }]);
-                  showToast("Movimento registrato!");
-                }}
-                onUpdateSpesa={(id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s))}
-                onRemoveSpesa={handleRemoveSpesaWithUndo}
-              />
+              <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Caricamento registro...</div>}>
+                <DashboardView
+                  key={activeTab}
+                  anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} currentUser={currentUser} topTags={topTags} showToast={showToast}
+                  datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta }}
+                  onAddSpesa={(newMov) => {
+                    const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
+                    setSpese(prev => [...prev, { ...newMov, id, importo: Number(newMov.importo) }]);
+                    showToast("Movimento registrato!");
+                  }}
+                  onUpdateSpesa={(id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s))}
+                  onRemoveSpesa={handleRemoveSpesaWithUndo}
+                />
+              </Suspense>
             )}
           </main>
         </>
