@@ -26,6 +26,17 @@ html, body {
   flex-direction: column;
 }
 
+/* --- ACCESSIBILITÀ: indicatore di focus da tastiera ---
+   Tutti gli input dell'app disabilitano l'outline nativo del browser (outline: 'none' negli
+   stili inline condivisi in App.jsx) senza fornire un sostituto: chi naviga da tastiera non
+   vede mai quale campo è attivo. :focus-visible mostra l'anello solo alla navigazione da
+   tastiera (non al click del mouse), ed è una proprietà diversa da "outline" quindi non
+   viene sovrascritta dallo stile inline. */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35);
+  border-color: #4f46e5;
+}
+
 /* --- ANIMAZIONI --- */
 @keyframes slideIn {
   from {

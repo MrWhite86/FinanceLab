@@ -138,7 +138,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                     )}
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: '900', color: amountColor }}>
-                    {isNeutro ? 'FILE' : `€ ${Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`}
+                    € {Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
               );

@@ -10,7 +10,7 @@ import { Download, FolderArchive, Lock, Save, Trash2, Unlock, Upload } from 'luc
  * 4. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
  *    poi ciò che useFinance.js usa per decidere se un movimento aumenta o riduce il saldo.
  */
-export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, styles, newUsername, setNewUsername, newPassword, setNewPassword }) {
+export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
   const isAdmin = user.username === 'admin';
   const [nuovoTag, setNuovaTag] = useState('');
   /** Il percorso di backup è di sola lettura finché l'admin non lo sblocca esplicitamente col lucchetto, per evitare modifiche accidentali. */
@@ -40,7 +40,8 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={styles.card}>
         <h3>Parametri Base</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+        {/* Su mobile 3 colonne fisse schiacciano troppo saldo/data/colore: si impila su una colonna */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '15px' }}>
           <div>
             <label style={styles.label}>SALDO INIZIALE (€)</label>
             <input type="number" value={config.saldoStatoZero} onChange={e => setConfig({ ...config, saldoStatoZero: Number(e.target.value) })} style={styles.input} />

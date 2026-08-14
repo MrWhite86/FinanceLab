@@ -73,7 +73,7 @@ const renderCustomPieLabel = ({ name, percent }) => {
  * DashboardView: Gestisce il registro di un anno specifico.
  * Include il form di registrazione, i grafici di analisi personalizzata per tag e la tabella dei movimenti.
  */
-export default function DashboardView({ anno, speseAnno, config, styles, colors, datiGrafici, onAddSpesa, onUpdateSpesa, onRemoveSpesa, onAllegaFile, topTags, showToast }) {
+export default function DashboardView({ anno, speseAnno, config, styles, colors, datiGrafici, onAddSpesa, onUpdateSpesa, onRemoveSpesa, onAllegaFile, topTags, showToast, isMobile }) {
   /** 'dati' (tabella + form) oppure 'grafici' (analisi): decide cosa mostrare sotto l'header. */
   const [viewMode, setViewMode] = useState('dati');
 
@@ -518,8 +518,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
         /* ===== VISTA "DATI" (form nuovo movimento + tabella) ===== */
         <>
           <div style={styles.card}>
-            {/* Riga principale del form: importo/data/nome + bottone REGISTRA, che valida tutto prima di chiamare onAddSpesa */}
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 150px 1fr 120px', gap: '15px', alignItems: 'end', marginBottom: '15px' }}>
+            {/* Riga principale del form: importo/data/nome + bottone REGISTRA, che valida tutto prima di chiamare onAddSpesa.
+                Su mobile le colonne fisse (120/150/1fr/120px) sforerebbero la larghezza dello schermo: si impila su una colonna. */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 150px 1fr 120px', gap: '15px', alignItems: 'end', marginBottom: '15px' }}>
               <div><label style={styles.label}>IMPORTO (€)</label><input type="number" value={nuovaSpesa.importo} onChange={e=>setNuovaSpesa({...nuovaSpesa, importo:e.target.value})} style={styles.input}/></div>
               <div><label style={styles.label}>DATA</label><input type="date" min={`${anno}-01-01`} max={`${anno}-12-31`} value={nuovaSpesa.data} onChange={e=>setNuovaSpesa({...nuovaSpesa, data:e.target.value})} style={styles.input}/></div>
               <div><label style={styles.label}>NOME</label><input type="text" value={nuovaSpesa.nota} onChange={e=>setNuovaSpesa({...nuovaSpesa, nota:e.target.value})} style={styles.input} placeholder="Descrizione del record..."/></div>
@@ -553,7 +554,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
                 <div>
                   <label style={styles.label}>VALORE SECONDARIO (€)</label>
                   <input type="number" value={nuovaSpesa.valoreSecondario} onChange={e => setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: e.target.value })} style={styles.input} placeholder="0.00" />
@@ -738,7 +739,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                           <td></td>
                           <td colSpan={5} style={{ padding: '14px 20px 18px 40px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '130px 130px 1fr auto auto', gap: '10px', alignItems: 'end' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '130px 130px 1fr auto auto', gap: '10px', alignItems: 'end' }}>
                               <div>
                                 <label style={styles.label}>DATA</label>
                                 <input type="date" min={`${anno}-01-01`} max={`${anno}-12-31`} value={nuovaSottovoce.data} onChange={e => setNuovaSottovoce({ ...nuovaSottovoce, data: e.target.value })} style={styles.input} />

@@ -377,7 +377,7 @@ export default function App() {
             {activeTab === 'impostazioni' && (
               <SettingsView
                 config={config} spese={spese} setConfig={setConfig} user={{ username: currentUser }}
-                updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} styles={s}
+                updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} styles={s} isMobile={isMobile}
                 newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword}
               />
             )}
@@ -389,7 +389,7 @@ export default function App() {
               <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Caricamento registro...</div>}>
                 <DashboardView
                   key={activeTab}
-                  anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} topTags={topTags} showToast={showToast}
+                  anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} topTags={topTags} showToast={showToast} isMobile={isMobile}
                   datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta }}
                   onAddSpesa={(newMov) => {
                     const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
