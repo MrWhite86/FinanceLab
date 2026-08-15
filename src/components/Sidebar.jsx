@@ -2,9 +2,9 @@
 // registro annuale (anni). Componente "dumb": non tiene stato proprio ne' calcola nulla,
 // riceve tutto da App.jsx (activeTab, elenco anni...) e si limita a notificare i click
 // tramite le callback ricevute come props (onTabChange, onAddAnno, onRemoveAnno, onLogout).
-import { Calendar, LayoutDashboard, LogOut, PlusCircle, Search, Settings, Trash2, User } from 'lucide-react';
+import { Calendar, Inbox, LayoutDashboard, LogOut, PlusCircle, Search, Settings, Trash2, User } from 'lucide-react';
 
-export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRemoveAnno, onLogout, currentUser, themeColor, isMobile, isOpen, setIsOpen }) {
+export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRemoveAnno, onLogout, currentUser, themeColor, isMobile, isOpen, setIsOpen, conteggioDaImportare }) {
   /** Stile di una voce di menu: sfondo pieno del colore tema se è quella attiva, altrimenti trasparente. */
   const sidebarItemStyle = (active) => ({
     display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
@@ -47,6 +47,14 @@ export default function Sidebar({ activeTab, onTabChange, anni, onAddAnno, onRem
         </button>
         <button onClick={() => { onTabChange('ricerca'); if(isMobile) setIsOpen(false); }} style={sidebarItemStyle(activeTab === 'ricerca')}>
           <Search size={18}/> Ricerca Globale
+        </button>
+        <button onClick={() => { onTabChange('importa'); if(isMobile) setIsOpen(false); }} style={{ ...sidebarItemStyle(activeTab === 'importa'), justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><Inbox size={18}/> Documenti da Importare</span>
+          {conteggioDaImportare > 0 && (
+            <span style={{ background: activeTab === 'importa' ? 'rgba(255,255,255,0.25)' : themeColor, color: '#fff', fontSize: '10px', fontWeight: '900', borderRadius: '999px', padding: '2px 7px', minWidth: '18px', textAlign: 'center' }}>
+              {conteggioDaImportare}
+            </span>
+          )}
         </button>
 
         <div style={{ padding: '25px 10px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

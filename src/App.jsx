@@ -17,13 +17,15 @@
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
-import { Toast, Modal } from './components/UI';
+import { Toast, Modal, AnteprimaModal } from './components/UI';
 import LoginView from './components/Login';
 import SearchView from './components/Search';
 import SettingsView from './components/Settings';
+import ImportaView from './components/Importa';
 import { useFinance } from './useFinance';
 import { INITIAL_CONFIG, COLORS } from './constants';
 import { parseImportedData } from './importUtils';
+import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
 
 // Dashboard include recharts (libreria di grafici pesante): caricata solo quando serve davvero,
 // non al primo avvio dell'app (login/impostazioni/ricerca non ne hanno bisogno).
@@ -212,6 +214,22 @@ export default function App() {
     }
   };
 
+  /** Apre il selettore cartelle nativo per scegliere/cambiare percorsoCattura (Impostazioni), cosi' l'utente non deve digitare a mano un percorso lungo (es. dentro iCloud Drive). */
+  const selezionaCartellaCattura = async () => {
+    if (!isTauri()) {
+      showToast("Solo versione Desktop.");
+      return;
+    }
+    try {
+      const { open } = window.__TAURI__.dialog;
+      const scelta = await open({ directory: true });
+      if (!scelta) return; // utente ha annullato
+      setConfig(prev => ({ ...prev, percorsoCattura: scelta }));
+    } catch {
+      showToast("Errore durante la selezione della cartella.");
+    }
+  };
+
   /** Salva le modifiche del form "Gestione Profilo": rinomina l'utente (migrando i suoi dati salvati) e/o aggiorna l'hash della password. */
   const handleUpdateProfile = async () => {
     const users = JSON.parse(localStorage.getItem('finance_lab_users') || '{}');
@@ -295,11 +313,13 @@ export default function App() {
   const updateSpesa = (id, updated) => setSpese(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updated } : s));
 
   /**
-   * Allega un file a un movimento esistente: apre il selettore file nativo del sistema
+   * Allega uno o più file a un movimento esistente: apre il selettore file nativo del sistema
    * operativo (serve Tauri, non è possibile ottenere il percorso reale di un file scelto
    * tramite <input type="file"> del browser per motivi di sicurezza), ne fa una COPIA dentro
-   * percorsoSalvataggio/backup/<anno del movimento>/, e salva il nome del file sul movimento.
-   * Il file originale scelto dall'utente non viene toccato/spostato, solo copiato.
+   * percorsoSalvataggio/backup/<anno del movimento>/, e aggiunge i nomi dei file all'elenco
+   * allegati del movimento (senza duplicati). Il file originale scelto dall'utente non viene
+   * toccato/spostato, solo copiato. Cliccare più volte accumula altri allegati, non sostituisce
+   * quelli già presenti; supporta anche il vecchio campo singolare "allegato" delle versioni precedenti.
    */
   const allegaFile = async (movimento) => {
     if (!isTauri()) {
@@ -311,19 +331,144 @@ export default function App() {
       const { copyFile, createDir } = window.__TAURI__.fs;
       const { join, basename } = window.__TAURI__.path;
 
-      const sourcePath = await open({ multiple: false });
-      if (!sourcePath) return; // utente ha annullato la selezione
+      const selezionati = await open({ multiple: true });
+      if (!selezionati) return; // utente ha annullato la selezione
+      const percorsi = Array.isArray(selezionati) ? selezionati : [selezionati];
+      if (percorsi.length === 0) return;
 
-      const nomeFile = await basename(sourcePath);
       const annoRecord = movimento.data.substring(0, 4);
       const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', annoRecord);
       await createDir(cartellaAnno, { recursive: true });
-      await copyFile(sourcePath, await join(cartellaAnno, nomeFile));
 
-      updateSpesa(movimento.id, { allegato: nomeFile });
-      showToast("File allegato!");
+      const nuoviNomiFile = [];
+      for (const sourcePath of percorsi) {
+        const nomeFile = await basename(sourcePath);
+        await copyFile(sourcePath, await join(cartellaAnno, nomeFile));
+        nuoviNomiFile.push(nomeFile);
+      }
+
+      const allegatiEsistenti = movimento.allegati || (movimento.allegato ? [movimento.allegato] : []);
+      const allegati = Array.from(new Set([...allegatiEsistenti, ...nuoviNomiFile]));
+      updateSpesa(movimento.id, { allegati });
+      showToast(nuoviNomiFile.length > 1 ? `${nuoviNomiFile.length} file allegati!` : "File allegato!");
     } catch {
       showToast("Errore durante l'allegato del file.");
+    }
+  };
+
+  // --- CATTURA DOCUMENTI (cartella sincronizzata, es. iCloud Drive/Google Drive) ---
+  /** Nomi dei file trovati in percorsoCattura non ancora collegati a un record (vedi Importa.jsx). */
+  const [fileDaImportare, setFileDaImportare] = useState([]);
+
+  /**
+   * Rilegge percorsoCattura e aggiorna fileDaImportare, escludendo i file già segnati come
+   * "gestiti" (config.fileCatturaGestiti) e i file nascosti (es. .DS_Store). Non distingue
+   * sottocartelle da file (la cartella di cattura è pensata per uso semplice, foto/scansioni
+   * salvate direttamente dentro, non per struttura annidata).
+   */
+  const scansionaCartellaCattura = async (configAttuale = config) => {
+    if (!isTauri() || !configAttuale.percorsoCattura) {
+      setFileDaImportare([]);
+      return;
+    }
+    try {
+      const { readDir } = window.__TAURI__.fs;
+      const entries = await readDir(configAttuale.percorsoCattura);
+      const gestiti = new Set(configAttuale.fileCatturaGestiti || []);
+      const nomiFile = entries
+        .map(e => e.name)
+        .filter(nome => nome && !nome.startsWith('.') && !gestiti.has(nome));
+      setFileDaImportare(nomiFile);
+    } catch {
+      setFileDaImportare([]);
+    }
+  };
+
+  // Rileggi la cartella di cattura appena il percorso è disponibile (login/caricamento config)
+  // o cambia nelle Impostazioni, cosi' il badge in Sidebar resta aggiornato senza azioni manuali.
+  // Dipende solo da percorsoCattura (non da tutto "config"): altrimenti scansionerebbe la
+  // cartella ad ogni singola modifica di configurazione, anche quelle che non c'entrano nulla.
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (currentUser) scansionaCartellaCattura(config);
+  }, [currentUser, config.percorsoCattura]);
+  /* eslint-enable react-hooks/exhaustive-deps */
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  /** Segna un file della cartella di cattura come "gestito", cosi' sparisce dalla lista senza toccare l'originale. */
+  const segnaFileCatturaGestito = (nomeFile) => {
+    setConfig(prev => ({ ...prev, fileCatturaGestiti: [...(prev.fileCatturaGestiti || []), nomeFile] }));
+    setFileDaImportare(prev => prev.filter(n => n !== nomeFile));
+  };
+
+  /** Collega un file già presente nella cartella di cattura a un record esistente (stesso schema di copia di allegaFile, ma la sorgente è percorsoCattura invece del selettore file). */
+  const allegaFileCatturaEsistente = async (nomeFile, movimento) => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return; }
+    try {
+      const { copyFile, createDir } = window.__TAURI__.fs;
+      const { join } = window.__TAURI__.path;
+
+      const annoRecord = movimento.data.substring(0, 4);
+      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', annoRecord);
+      await createDir(cartellaAnno, { recursive: true });
+      await copyFile(await join(config.percorsoCattura, nomeFile), await join(cartellaAnno, nomeFile));
+
+      const allegatiEsistenti = movimento.allegati || (movimento.allegato ? [movimento.allegato] : []);
+      const allegati = Array.from(new Set([...allegatiEsistenti, nomeFile]));
+      updateSpesa(movimento.id, { allegati });
+      segnaFileCatturaGestito(nomeFile);
+      showToast("File collegato al record!");
+    } catch {
+      showToast("Errore durante il collegamento del file.");
+    }
+  };
+
+  /** Crea un nuovo record a partire da un file della cartella di cattura: copia il file in backup/<anno>/ e aggiunge il movimento con quel file già allegato. */
+  const creaRecordDaCattura = async (nomeFile, anno, campi) => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return; }
+    try {
+      const { copyFile, createDir } = window.__TAURI__.fs;
+      const { join } = window.__TAURI__.path;
+
+      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', anno);
+      await createDir(cartellaAnno, { recursive: true });
+      await copyFile(await join(config.percorsoCattura, nomeFile), await join(cartellaAnno, nomeFile));
+
+      if (!config.anniAttivi.includes(anno)) {
+        setConfig(prev => ({ ...prev, anniAttivi: [...(prev.anniAttivi || []), anno] }));
+      }
+      const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
+      setSpese(prev => [...prev, { ...campi, id, importo: Number(campi.importo), allegati: [nomeFile] }]);
+      segnaFileCatturaGestito(nomeFile);
+      showToast("Nuovo record creato dal file!");
+    } catch {
+      showToast("Errore durante la creazione del record.");
+    }
+  };
+
+  /** File attualmente mostrato nella finestra di anteprima ({ nome, dataUri, tipo }), o null se chiusa. */
+  const [anteprima, setAnteprima] = useState(null);
+
+  /**
+   * Legge un allegato già copiato in percorsoSalvataggio/backup/<anno>/ e lo prepara per
+   * AnteprimaModal: lo converte in una data URI (base64) cosi' la webview lo puo' mostrare
+   * direttamente in un <img>/<iframe>, senza aprire un'app esterna.
+   */
+  const apriAnteprima = async (movimento, nomeFile) => {
+    if (!isTauri()) {
+      showToast("Solo versione Desktop.");
+      return;
+    }
+    try {
+      const { readBinaryFile } = window.__TAURI__.fs;
+      const { join } = window.__TAURI__.path;
+      const annoRecord = movimento.data.substring(0, 4);
+      const percorso = await join(config.percorsoSalvataggio, 'backup', annoRecord, nomeFile);
+      const bytes = await readBinaryFile(percorso);
+      const tipo = mimeTypeDaNomeFile(nomeFile);
+      setAnteprima({ nome: nomeFile, dataUri: `data:${tipo};base64,${bytesToBase64(bytes)}`, tipo });
+    } catch {
+      showToast("Impossibile aprire l'anteprima: il file potrebbe essere stato spostato.");
     }
   };
 
@@ -349,7 +494,7 @@ export default function App() {
           {/* Overlay scuro dietro al menu mobile aperto: cliccandolo si chiude */}
           {isMobile && isMenuOpen && <div onClick={() => setIsMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 90, backdropFilter: 'blur(2px)' }} />}
 
-          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} themeColor={config.coloreTema} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} themeColor={config.coloreTema} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} conteggioDaImportare={fileDaImportare.length} />
 
           <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px' : '30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             {isMobile && (
@@ -370,14 +515,25 @@ export default function App() {
             {activeTab === 'ricerca' && (
               <SearchView
                 searchTerm={searchTerm} setSearchTerm={setSearchTerm} speseFiltrate={speseFiltrateRicerca} config={config} styles={s}
-                onUpdateSpesa={updateSpesa} showToast={showToast} // topTags/currentUser rimossi, non più utilizzati in Search.jsx
+                onUpdateSpesa={updateSpesa} onApriAnteprima={apriAnteprima} showToast={showToast} // topTags/currentUser rimossi, non più utilizzati in Search.jsx
+              />
+            )}
+
+            {activeTab === 'importa' && (
+              <ImportaView
+                fileDaImportare={fileDaImportare} percorsoCattura={config.percorsoCattura} spese={spese} config={config} styles={s} isMobile={isMobile}
+                onRiscansiona={() => scansionaCartellaCattura(config)}
+                onAllegaEsistente={allegaFileCatturaEsistente}
+                onCreaRecord={creaRecordDaCattura}
+                onIgnoraFile={segnaFileCatturaGestito}
+                showToast={showToast}
               />
             )}
 
             {activeTab === 'impostazioni' && (
               <SettingsView
                 config={config} spese={spese} setConfig={setConfig} user={{ username: currentUser }}
-                updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} styles={s} isMobile={isMobile}
+                updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} onSelezionaCartellaCattura={selezionaCartellaCattura} styles={s} isMobile={isMobile}
                 newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword}
               />
             )}
@@ -399,6 +555,7 @@ export default function App() {
                   onUpdateSpesa={updateSpesa}
                   onRemoveSpesa={handleRemoveSpesaWithUndo}
                   onAllegaFile={allegaFile}
+                  onApriAnteprima={apriAnteprima}
                 />
               </Suspense>
             )}
@@ -407,6 +564,7 @@ export default function App() {
       )}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
       <Modal {...modal} themeColor={config.coloreTema} setInputValue={(val) => setModal(prev => ({...prev, inputValue: val}))} onCancel={() => setModal(prev => ({...prev, show: false}))} />
+      <AnteprimaModal file={anteprima} onClose={() => setAnteprima(null)} />
     </div>
   );
 }

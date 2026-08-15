@@ -1,8 +1,9 @@
-// Due componenti di interfaccia generici e riutilizzabili in tutta l'app (nessuna logica
-// applicativa qui dentro): la notifica in basso a destra e la finestra di dialogo modale.
-// App.jsx tiene lo stato di entrambi (toast/modal) e li renderizza una sola volta, in fondo
-// all'albero dei componenti, cosi' funzionano sopra qualunque vista sia attiva.
-import { Info, X } from 'lucide-react';
+// Tre componenti di interfaccia generici e riutilizzabili in tutta l'app (nessuna logica
+// applicativa qui dentro): la notifica in basso a destra, la finestra di dialogo modale, e
+// l'anteprima di un allegato. App.jsx tiene lo stato di tutti e li renderizza una sola volta,
+// in fondo all'albero dei componenti, cosi' funzionano sopra qualunque vista sia attiva.
+import { FileWarning, Info, X } from 'lucide-react';
+import { tipoConAnteprima } from '../fileUtils';
 
 /**
  * Notifica temporanea (si autochiude dopo 4s, vedi showToast in App.jsx).
@@ -75,6 +76,47 @@ export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onCon
           <button
             style={{ padding: '10px 20px', background: themeColor, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
             onClick={() => onConfirm(inputValue)}>CONFERMA</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Anteprima di un allegato (icona "occhio" sulle righe con documenti, vedi Dashboard.jsx/Search.jsx).
+ * file = { nome, dataUri, tipo } preparato da apriAnteprima in App.jsx, oppure null se chiusa.
+ * Sa mostrare solo immagini e PDF (i formati che i browser/webview sanno rendere nativamente,
+ * vedi tipoConAnteprima in fileUtils.js); per gli altri formati mostra un avviso invece di un riquadro vuoto.
+ */
+export const AnteprimaModal = ({ file, onClose }) => {
+  if (!file) return null;
+  const conAnteprima = tipoConAnteprima(file.tipo);
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.85)',
+      backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 300, padding: '20px'
+    }} onClick={onClose}>
+      <div
+        style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '900px', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
+          <span style={{ fontWeight: '800', fontSize: '14px', color: '#1e293b' }}>{file.nome}</span>
+          <X size={20} color="#64748b" style={{ cursor: 'pointer' }} onClick={onClose} />
+        </div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+          {!conAnteprima ? (
+            <div style={{ textAlign: 'center', color: '#64748b', padding: '40px' }}>
+              <FileWarning size={40} color="#94a3b8" style={{ marginBottom: '12px' }} />
+              <p style={{ margin: 0, fontWeight: '700' }}>Anteprima non disponibile per questo formato</p>
+              <span style={{ fontSize: '12px' }}>Apri il file dalla cartella di backup per visualizzarlo</span>
+            </div>
+          ) : file.tipo === 'application/pdf' ? (
+            <iframe src={file.dataUri} title={file.nome} style={{ width: '100%', height: '100%', border: 'none' }} />
+          ) : (
+            <img src={file.dataUri} alt={file.nome} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          )}
         </div>
       </div>
     </div>

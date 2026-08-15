@@ -9,6 +9,10 @@
  *   a sommare/sottrarre i movimenti per calcolare la liquidità attuale.
  * - coloreTema: colore principale dell'interfaccia (bottoni, grafici, header).
  * - percorsoSalvataggio: cartella di default per il backup locale (solo versione desktop Tauri).
+ * - percorsoCattura: cartella opzionale (es. dentro iCloud Drive/Google Drive) sincronizzata
+ *   col telefono, dove l'utente salva foto/scansioni da collegare poi a un record (vedi Importa.jsx).
+ * - fileCatturaGestiti: nomi dei file di percorsoCattura già collegati a un record o creati come
+ *   nuovo record, cosi' non ricompaiono più nella vista "Documenti da Importare".
  * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
  *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
  * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
@@ -18,6 +22,8 @@ export const INITIAL_CONFIG = {
   dataStatoZero: '2024-01-01',
   coloreTema: '#4f46e5',
   percorsoSalvataggio: '/Users/marcellobianco/Documents/FinanceLab_Data',
+  percorsoCattura: '',
+  fileCatturaGestiti: [],
   tags: [
     { nome: "stipendio", tipo: "entrata" },
     { nome: "bollette", tipo: "uscita" },

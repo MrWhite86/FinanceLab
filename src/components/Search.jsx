@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Search, Tag, X } from 'lucide-react';
+import { Eye, FileText, Search, Tag, X } from 'lucide-react';
 
 /**
  * SearchView: ricerca testuale su TUTTI i movimenti dell'utente, di tutti gli anni
@@ -8,7 +8,7 @@ import { FileText, Search, Tag, X } from 'lucide-react';
  * questo componente si occupa solo di mostrare i risultati e di un'azione in più:
  * selezionare più righe e applicarci in blocco uno o più tag della libreria.
  */
-export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, onUpdateSpesa, showToast }) {
+export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, config, styles, onUpdateSpesa, onApriAnteprima, showToast }) {
   const [selectedLibraryTags, setSelectedLibraryTags] = useState([]); // tag scelti dalla "libreria" da applicare in blocco
   const [selectedRows, setSelectedRows] = useState([]); // id dei movimenti selezionati con le checkbox
   const [animatedRowId, setAnimatedRowId] = useState(null); // id della riga appena aggiornata, per un breve effetto di evidenziazione
@@ -108,6 +108,8 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
               const isUscita = tagInfos.some(t => t.tipo === 'uscita');
               const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
               const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#1e293b');
+              // Supporta anche il vecchio campo singolare "allegato" delle versioni precedenti dell'app
+              const allegati = mov.allegati || (mov.allegato ? [mov.allegato] : []);
 
               return (
                 <tr key={mov.id} 
@@ -130,7 +132,12 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   </td>
                   <td style={{ padding: '16px 20px', fontSize:'14px' }}>
                     <div style={{fontWeight:600}}>{mov.nota}</div>
-                    {mov.allegato && <div style={{fontSize:'10px', color:'#94a3b8'}} title="Percorso reale del file copiato da allegaFile"><FileText size={10}/> {config.percorsoSalvataggio}/backup/{mov.data.substring(0,4)}/{mov.allegato}</div>}
+                    {allegati.map(nomeFile => (
+                      <div key={nomeFile} style={{fontSize:'10px', color:'#94a3b8', display:'flex', alignItems:'center', gap:'4px', marginTop:'2px'}} title={`${config.percorsoSalvataggio}/backup/${mov.data.substring(0,4)}/${nomeFile}`}>
+                        <FileText size={10}/> {nomeFile}
+                        <Eye size={11} style={{ cursor: 'pointer' }} title="Apri l'anteprima" onClick={() => onApriAnteprima(mov, nomeFile)} />
+                      </div>
+                    ))}
                     {mov.valoreSecondario != null && (
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                         {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}

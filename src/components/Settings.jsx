@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FolderArchive, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
+import { Download, FolderArchive, FolderSync, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
 
 /**
  * SettingsView: quattro sezioni indipendenti, tutte agiscono sull'oggetto "config"
@@ -10,7 +10,7 @@ import { Download, FolderArchive, Lock, Save, Trash2, Unlock, Upload } from 'luc
  * 4. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
  *    poi ciò che useFinance.js usa per decidere se un movimento aumenta o riduce il saldo.
  */
-export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
+export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, onSelezionaCartellaCattura, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
   const isAdmin = user.username === 'admin';
   const [nuovoTag, setNuovaTag] = useState('');
   /** Il percorso di backup è di sola lettura finché l'admin non lo sblocca esplicitamente col lucchetto, per evitare modifiche accidentali. */
@@ -77,6 +77,19 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
           <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config, spese})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Download size={18}/> Esporta</button>
           <label style={{...styles.btn('#475569'), cursor:'pointer', flex:1, justifyContent:'center'}}><Upload size={18}/> Importa <input type="file" style={{display:'none'}} onChange={importaJSON}/></label>
           <button onClick={backupCartella} style={{...styles.btn('#f59e0b'), flex:1, justifyContent:'center'}}><FolderArchive size={18}/> Backup Cartella</button>
+        </div>
+      </div>
+
+      <div style={styles.card}>
+        <h3>Cartella di Cattura</h3>
+        <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '15px' }}>
+          Punta a una cartella sincronizzata col telefono (es. iCloud Drive o Google Drive): le foto/scansioni
+          salvate lì dal telefono compariranno nella sezione &ldquo;Documenti da Importare&rdquo;, pronte da collegare a un record.
+        </p>
+        <label style={styles.label}>PERCORSO CARTELLA DI CATTURA</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input type="text" value={config.percorsoCattura || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: '#f1f5f9', color: '#94a3b8', flex: 1 }} />
+          <button onClick={onSelezionaCartellaCattura} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><FolderSync size={18}/> Scegli Cartella</button>
         </div>
       </div>
 
