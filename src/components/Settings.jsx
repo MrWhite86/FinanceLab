@@ -1,20 +1,28 @@
 import { useState } from 'react';
-import { Download, FolderArchive, FolderSync, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
+import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
 
 /**
- * SettingsView: quattro sezioni indipendenti, tutte agiscono sull'oggetto "config"
- * passato da App.jsx (che lo salva in localStorage ad ogni modifica, vedi App.jsx):
+ * SettingsView: sezioni indipendenti, tutte agiscono sull'oggetto "config" passato da
+ * App.jsx (che lo salva in localStorage ad ogni modifica, vedi App.jsx):
  * 1. Parametri Base - saldo/data di partenza per il calcolo del saldo, colore tema.
- * 2. Percorso di Lavoro - cartella di backup (solo admin puo' cambiarla) + import/export/backup.
- * 3. Gestione Profilo - cambio username/password (la vera logica è in App.jsx: handleUpdateProfile).
- * 4. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
+ * 2. Percorso di Lavoro - cartella principale (solo admin puo' cambiarla) + import/export manuale.
+ * 3. Cartella di Cattura - vedi Importa.jsx.
+ * 4. Backup Locale / Backup Cloud - backup automatico periodico (frequenza + rotazione
+ *    indipendenti per le due destinazioni, vedi eseguiBackup in App.jsx).
+ * 5. Gestione Profilo - cambio username/password (la vera logica è in App.jsx: handleUpdateProfile).
+ * 6. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
  *    poi ciò che useFinance.js usa per decidere se un movimento aumenta o riduce il saldo.
  */
-export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, backupCartella, onSelezionaCartellaCattura, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
+export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, onSelezionaCartellaCattura, onSelezionaCartellaBackupCloud, onEseguiBackup, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
   const isAdmin = user.username === 'admin';
   const [nuovoTag, setNuovaTag] = useState('');
   /** Il percorso di backup è di sola lettura finché l'admin non lo sblocca esplicitamente col lucchetto, per evitare modifiche accidentali. */
   const [bloccaPercorso, setBloccaPercorso] = useState(true);
+
+  /** Applica un aggiornamento parziale a backupLocale o backupCloud senza perdere gli altri campi. */
+  const aggiornaBackup = (chiave, campi) => setConfig({ ...config, [chiave]: { ...config[chiave], ...campi } });
+
+  const formatUltimoBackup = (iso) => iso ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)) : 'Mai eseguito';
 
   /** Click sul pallino colorato di un tag: fa scorrere il suo tipo tra entrata -> uscita -> neutro -> (di nuovo entrata). */
   const toggleTipoCategoria = (nome) => {
@@ -76,8 +84,82 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
           {/* Esporta: genera al volo un file JSON scaricabile con config + tutti i movimenti, nello stesso formato atteso da importaJSON/parseImportedData */}
           <button onClick={() => {const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({config, spese})])); a.download="backup.json"; a.click();}} style={{...styles.btn('#10b981'), flex:1, justifyContent:'center'}}><Download size={18}/> Esporta</button>
           <label style={{...styles.btn('#475569'), cursor:'pointer', flex:1, justifyContent:'center'}}><Upload size={18}/> Importa <input type="file" style={{display:'none'}} onChange={importaJSON}/></label>
-          <button onClick={backupCartella} style={{...styles.btn('#f59e0b'), flex:1, justifyContent:'center'}}><FolderArchive size={18}/> Backup Cartella</button>
         </div>
+      </div>
+
+      <div style={styles.card}>
+        <h3>Backup Locale</h3>
+        <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '15px' }}>
+          Salva periodicamente una copia completa e autosufficiente (archivio + tutti gli allegati) dentro
+          &ldquo;{config.percorsoSalvataggio}/{user.username}/backup_completo/&rdquo; — una sottocartella separata per ogni
+          profilo, senza mescolare i dati tra utenti. Basta caricare quella cartella su un altro PC per recuperare tutto.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+          <div>
+            <label style={styles.label}>FREQUENZA</label>
+            <select value={config.backupLocale?.frequenza || 'nessuno'} onChange={e => aggiornaBackup('backupLocale', { frequenza: e.target.value })} style={styles.input}>
+              <option value="nessuno">Nessuno</option>
+              <option value="avvio">Ad ogni avvio</option>
+              <option value="giornaliero">Giornaliero</option>
+              <option value="modifica">Ad ogni modifica</option>
+            </select>
+          </div>
+          <div>
+            <label style={styles.label}>BACKUP DA CONSERVARE</label>
+            <select value={config.backupLocale?.numeroBackup || 1} onChange={e => aggiornaBackup('backupLocale', { numeroBackup: Number(e.target.value) })} style={styles.input}>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>Ultimo backup: {formatUltimoBackup(config.backupLocale?.ultimoBackup)}</span>
+          <button onClick={() => onEseguiBackup('locale')} style={{ ...styles.btn('#f59e0b'), width: 'auto' }}><HardDriveDownload size={18}/> Esegui Backup Ora</button>
+        </div>
+      </div>
+
+      <div style={styles.card}>
+        <h3>Backup Cloud</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', cursor: 'pointer' }} onClick={() => aggiornaBackup('backupCloud', { attivo: !config.backupCloud?.attivo })}>
+          <input type="checkbox" checked={!!config.backupCloud?.attivo} onChange={() => {}} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+          <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>Mantieni anche una copia su una cartella sincronizzata (iCloud Drive, Google Drive, iDrive...)</span>
+        </div>
+
+        {config.backupCloud?.attivo && (
+          <>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={styles.label}>CARTELLA DI BACKUP CLOUD</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input type="text" value={config.backupCloud?.percorso || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: '#f1f5f9', color: '#94a3b8', flex: 1 }} />
+                <button onClick={onSelezionaCartellaBackupCloud} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><FolderSync size={18}/> Scegli Cartella</button>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+              <div>
+                <label style={styles.label}>FREQUENZA</label>
+                <select value={config.backupCloud?.frequenza || 'nessuno'} onChange={e => aggiornaBackup('backupCloud', { frequenza: e.target.value })} style={styles.input}>
+                  <option value="nessuno">Nessuno</option>
+                  <option value="avvio">Ad ogni avvio</option>
+                  <option value="giornaliero">Giornaliero</option>
+                  <option value="modifica">Ad ogni modifica</option>
+                </select>
+              </div>
+              <div>
+                <label style={styles.label}>BACKUP DA CONSERVARE</label>
+                <select value={config.backupCloud?.numeroBackup || 1} onChange={e => aggiornaBackup('backupCloud', { numeroBackup: Number(e.target.value) })} style={styles.input}>
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>Ultimo backup: {formatUltimoBackup(config.backupCloud?.ultimoBackup)}</span>
+              <button onClick={() => onEseguiBackup('cloud')} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><CloudUpload size={18}/> Esegui Backup Ora</button>
+            </div>
+          </>
+        )}
       </div>
 
       <div style={styles.card}>

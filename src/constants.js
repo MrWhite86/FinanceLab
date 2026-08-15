@@ -13,6 +13,11 @@
  *   col telefono, dove l'utente salva foto/scansioni da collegare poi a un record (vedi Importa.jsx).
  * - fileCatturaGestiti: nomi dei file di percorsoCattura già collegati a un record o creati come
  *   nuovo record, cosi' non ricompaiono più nella vista "Documenti da Importare".
+ * - backupLocale/backupCloud: due destinazioni di backup indipendenti (vedi backupUtils.js e
+ *   App.jsx/eseguiBackup), ognuna con la propria frequenza ('nessuno'|'avvio'|'giornaliero'|'modifica')
+ *   e il proprio numero di snapshot da conservare (1-3). backupCloud si attiva solo se "attivo" è
+ *   true e ha un percorso proprio (es. dentro iCloud Drive/Google Drive); backupLocale usa sempre
+ *   percorsoSalvataggio. "ultimoBackup" (ISO) serve solo alla frequenza 'giornaliero'.
  * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
  *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
  * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
@@ -24,6 +29,8 @@ export const INITIAL_CONFIG = {
   percorsoSalvataggio: '/Users/marcellobianco/Documents/FinanceLab_Data',
   percorsoCattura: '',
   fileCatturaGestiti: [],
+  backupLocale: { frequenza: 'nessuno', numeroBackup: 1, ultimoBackup: null },
+  backupCloud: { attivo: false, percorso: '', frequenza: 'nessuno', numeroBackup: 1, ultimoBackup: null },
   tags: [
     { nome: "stipendio", tipo: "entrata" },
     { nome: "bollette", tipo: "uscita" },

@@ -14,7 +14,7 @@
  * 4. Calcolo finanziario: delega tutta la logica di calcolo all'hook useFinance.
  */
 
-import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense, lazy } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import { Toast, Modal, AnteprimaModal } from './components/UI';
@@ -26,6 +26,7 @@ import { useFinance } from './useFinance';
 import { INITIAL_CONFIG, COLORS } from './constants';
 import { parseImportedData } from './importUtils';
 import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
+import { nomeCartellaBackup, cartelleDaRimuovere, backupDaEseguireAllAvvio } from './backupUtils';
 
 // Dashboard include recharts (libreria di grafici pesante): caricata solo quando serve davvero,
 // non al primo avvio dell'app (login/impostazioni/ricerca non ne hanno bisogno).
@@ -193,26 +194,118 @@ export default function App() {
     reader.readAsText(e.target.files[0]);
   };
 
-  /** Crea una sottocartella di backup vuota (Root/Utente/Anno/backup_<timestamp>) tramite le API filesystem di Tauri. Funziona solo nella versione desktop. */
-  const backupCartella = async () => {
-    if (!isTauri()) {
-      showToast("Solo versione Desktop.");
-      return;
-    }
+  // --- BACKUP AUTOMATICO (locale e cloud, indipendenti: vedi backupLocale/backupCloud in constants.js) ---
+  /** Copia ricorsivamente tutto il contenuto di "sorgente" dentro "destinazione" (crea le sottocartelle mancanti). Se "sorgente" non esiste ancora (nessun allegato mai caricato), non fa nulla. */
+  const copiaCartellaRicorsiva = async (sorgente, destinazione) => {
+    const { readDir, copyFile, createDir } = window.__TAURI__.fs;
+    const { join } = window.__TAURI__.path;
+    await createDir(destinazione, { recursive: true });
+    let voci;
+    try { voci = await readDir(sorgente, { recursive: true }); } catch { return; }
+    const copiaLista = async (lista, segmenti) => {
+      for (const voce of lista) {
+        const segmentiVoce = [...segmenti, voce.name];
+        if (voce.children) {
+          await createDir(await join(destinazione, ...segmentiVoce), { recursive: true });
+          await copiaLista(voce.children, segmentiVoce);
+        } else {
+          await copyFile(voce.path, await join(destinazione, ...segmentiVoce));
+        }
+      }
+    };
+    await copiaLista(voci, []);
+  };
+
+  /**
+   * Crea uno snapshot di backup COMPLETO e autosufficiente (archivio.json con config+spese, più una
+   * copia di tutti gli allegati) dentro "<radice>/<utente>/backup_completo/<timestamp>/", cosi'
+   * caricando quella cartella su un altro PC (con Importa) si recupera tutto. Applica poi la
+   * rotazione: mantiene solo le "numeroBackup" copie più recenti per quella destinazione, eliminando
+   * le più vecchie. destinazione: 'locale' (usa percorsoSalvataggio) oppure 'cloud' (usa backupCloud.percorso).
+   * Annidato per utente perché percorsoSalvataggio è condiviso da tutti i profili sullo stesso Mac
+   * (vedi globalRoot): senza questo, due utenti diversi si sovrascriverebbero a vicenda i backup.
+   */
+  const eseguiBackup = async (destinazione) => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return; }
+    const radice = destinazione === 'locale' ? config.percorsoSalvataggio : config.backupCloud?.percorso;
+    if (!radice) { showToast("Nessun percorso di backup configurato."); return; }
     try {
-      // Uso API globale (withGlobalTauri: true) per evitare errori di import
-      const { createDir } = window.__TAURI__.fs;
+      const { writeTextFile, readDir, removeDir, createDir } = window.__TAURI__.fs;
       const { join } = window.__TAURI__.path;
-      const ts = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
-      // Struttura: Root / Utente / Anno / backup_ts
-      const annoRif = /^\d{4}$/.test(activeTab) ? activeTab : new Date().getFullYear().toString();
-      const fullPath = await join(config.percorsoSalvataggio, currentUser, annoRif, `backup_${ts}`);
-      await createDir(fullPath, { recursive: true });
-      showToast("Backup completato!");
+
+      const cartellaBackupCompleto = await join(radice, currentUser, 'backup_completo');
+      const cartellaSnapshot = await join(cartellaBackupCompleto, nomeCartellaBackup());
+      await createDir(cartellaSnapshot, { recursive: true });
+      await writeTextFile(await join(cartellaSnapshot, 'archivio.json'), JSON.stringify({ config, spese }));
+      await copiaCartellaRicorsiva(await join(config.percorsoSalvataggio, currentUser, 'backup'), await join(cartellaSnapshot, 'backup'));
+
+      // Rotazione: mantiene solo le copie più recenti configurate per questa destinazione
+      const numeroDaTenere = (destinazione === 'locale' ? config.backupLocale?.numeroBackup : config.backupCloud?.numeroBackup) || 1;
+      let nomiEsistenti = [];
+      try { nomiEsistenti = (await readDir(cartellaBackupCompleto)).map(e => e.name); } catch { /* primo backup in assoluto per questa destinazione */ }
+      for (const nome of cartelleDaRimuovere(nomiEsistenti, numeroDaTenere)) {
+        await removeDir(await join(cartellaBackupCompleto, nome), { recursive: true });
+      }
+
+      const chiaveConfig = destinazione === 'locale' ? 'backupLocale' : 'backupCloud';
+      setConfig(prev => ({ ...prev, [chiaveConfig]: { ...prev[chiaveConfig], ultimoBackup: new Date().toISOString() } }));
+      showToast(`Backup ${destinazione === 'locale' ? 'locale' : 'cloud'} completato!`);
     } catch {
-      showToast("Errore permessi backup.");
+      showToast(`Errore durante il backup ${destinazione === 'locale' ? 'locale' : 'cloud'}.`);
     }
   };
+
+  /** Apre il selettore cartelle nativo per scegliere/cambiare backupCloud.percorso (Impostazioni). */
+  const selezionaCartellaBackupCloud = async () => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return; }
+    try {
+      const { open } = window.__TAURI__.dialog;
+      const scelta = await open({ directory: true });
+      if (!scelta) return;
+      setConfig(prev => ({ ...prev, backupCloud: { ...prev.backupCloud, percorso: scelta } }));
+    } catch {
+      showToast("Errore durante la selezione della cartella.");
+    }
+  };
+
+  // Controllo "ad ogni avvio"/"giornaliero": una sola volta per sessione di login (non ad ogni
+  // modifica delle impostazioni). Aspetta che spese sia stato ricaricato da localStorage, cosi'
+  // config riflette già i dati salvati e non i default iniziali.
+  const backupAvvioEseguitoRef = useRef(new Set());
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+  useEffect(() => {
+    if (!currentUser || backupAvvioEseguitoRef.current.has(currentUser)) return;
+    backupAvvioEseguitoRef.current.add(currentUser);
+    if (backupDaEseguireAllAvvio(config.backupLocale?.frequenza, config.backupLocale?.ultimoBackup)) {
+      eseguiBackup('locale');
+    }
+    if (config.backupCloud?.attivo && backupDaEseguireAllAvvio(config.backupCloud?.frequenza, config.backupCloud?.ultimoBackup)) {
+      eseguiBackup('cloud');
+    }
+  }, [currentUser, spese]);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+  // "Ad ogni modifica": backup automatico "debounced" ~2s dopo l'ultima modifica ai MOVIMENTI
+  // (non ad ogni modifica di config, altrimenti l'aggiornamento di backupLocale.ultimoBackup fatto
+  // da eseguiBackup stesso ritriggererebbe questo effetto all'infinito).
+  const debounceBackupRef = useRef({ locale: null, cloud: null });
+  useEffect(() => {
+    if (!currentUser) return;
+    const timer = debounceBackupRef.current;
+    if (config.backupLocale?.frequenza === 'modifica') {
+      clearTimeout(timer.locale);
+      timer.locale = setTimeout(() => eseguiBackup('locale'), 2000);
+    }
+    if (config.backupCloud?.attivo && config.backupCloud?.frequenza === 'modifica') {
+      clearTimeout(timer.cloud);
+      timer.cloud = setTimeout(() => eseguiBackup('cloud'), 2000);
+    }
+    return () => {
+      clearTimeout(timer.locale);
+      clearTimeout(timer.cloud);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spese]);
 
   /** Apre il selettore cartelle nativo per scegliere/cambiare percorsoCattura (Impostazioni), cosi' l'utente non deve digitare a mano un percorso lungo (es. dentro iCloud Drive). */
   const selezionaCartellaCattura = async () => {
@@ -316,7 +409,7 @@ export default function App() {
    * Allega uno o più file a un movimento esistente: apre il selettore file nativo del sistema
    * operativo (serve Tauri, non è possibile ottenere il percorso reale di un file scelto
    * tramite <input type="file"> del browser per motivi di sicurezza), ne fa una COPIA dentro
-   * percorsoSalvataggio/backup/<anno del movimento>/, e aggiunge i nomi dei file all'elenco
+   * percorsoSalvataggio/<utente>/backup/<anno del movimento>/, e aggiunge i nomi dei file all'elenco
    * allegati del movimento (senza duplicati). Il file originale scelto dall'utente non viene
    * toccato/spostato, solo copiato. Cliccare più volte accumula altri allegati, non sostituisce
    * quelli già presenti; supporta anche il vecchio campo singolare "allegato" delle versioni precedenti.
@@ -337,7 +430,7 @@ export default function App() {
       if (percorsi.length === 0) return;
 
       const annoRecord = movimento.data.substring(0, 4);
-      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', annoRecord);
+      const cartellaAnno = await join(config.percorsoSalvataggio, currentUser, 'backup', annoRecord);
       await createDir(cartellaAnno, { recursive: true });
 
       const nuoviNomiFile = [];
@@ -409,7 +502,7 @@ export default function App() {
       const { join } = window.__TAURI__.path;
 
       const annoRecord = movimento.data.substring(0, 4);
-      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', annoRecord);
+      const cartellaAnno = await join(config.percorsoSalvataggio, currentUser, 'backup', annoRecord);
       await createDir(cartellaAnno, { recursive: true });
       await copyFile(await join(config.percorsoCattura, nomeFile), await join(cartellaAnno, nomeFile));
 
@@ -423,14 +516,14 @@ export default function App() {
     }
   };
 
-  /** Crea un nuovo record a partire da un file della cartella di cattura: copia il file in backup/<anno>/ e aggiunge il movimento con quel file già allegato. */
+  /** Crea un nuovo record a partire da un file della cartella di cattura: copia il file in <utente>/backup/<anno>/ e aggiunge il movimento con quel file già allegato. */
   const creaRecordDaCattura = async (nomeFile, anno, campi) => {
     if (!isTauri()) { showToast("Solo versione Desktop."); return; }
     try {
       const { copyFile, createDir } = window.__TAURI__.fs;
       const { join } = window.__TAURI__.path;
 
-      const cartellaAnno = await join(config.percorsoSalvataggio, 'backup', anno);
+      const cartellaAnno = await join(config.percorsoSalvataggio, currentUser, 'backup', anno);
       await createDir(cartellaAnno, { recursive: true });
       await copyFile(await join(config.percorsoCattura, nomeFile), await join(cartellaAnno, nomeFile));
 
@@ -450,7 +543,7 @@ export default function App() {
   const [anteprima, setAnteprima] = useState(null);
 
   /**
-   * Legge un allegato già copiato in percorsoSalvataggio/backup/<anno>/ e lo prepara per
+   * Legge un allegato già copiato in percorsoSalvataggio/<utente>/backup/<anno>/ e lo prepara per
    * AnteprimaModal: lo converte in una data URI (base64) cosi' la webview lo puo' mostrare
    * direttamente in un <img>/<iframe>, senza aprire un'app esterna.
    */
@@ -463,7 +556,7 @@ export default function App() {
       const { readBinaryFile } = window.__TAURI__.fs;
       const { join } = window.__TAURI__.path;
       const annoRecord = movimento.data.substring(0, 4);
-      const percorso = await join(config.percorsoSalvataggio, 'backup', annoRecord, nomeFile);
+      const percorso = await join(config.percorsoSalvataggio, currentUser, 'backup', annoRecord, nomeFile);
       const bytes = await readBinaryFile(percorso);
       const tipo = mimeTypeDaNomeFile(nomeFile);
       setAnteprima({ nome: nomeFile, dataUri: `data:${tipo};base64,${bytesToBase64(bytes)}`, tipo });
@@ -533,7 +626,8 @@ export default function App() {
             {activeTab === 'impostazioni' && (
               <SettingsView
                 config={config} spese={spese} setConfig={setConfig} user={{ username: currentUser }}
-                updateProfile={handleUpdateProfile} importaJSON={importaJSON} backupCartella={backupCartella} onSelezionaCartellaCattura={selezionaCartellaCattura} styles={s} isMobile={isMobile}
+                updateProfile={handleUpdateProfile} importaJSON={importaJSON} onSelezionaCartellaCattura={selezionaCartellaCattura}
+                onSelezionaCartellaBackupCloud={selezionaCartellaBackupCloud} onEseguiBackup={eseguiBackup} styles={s} isMobile={isMobile}
                 newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword}
               />
             )}
