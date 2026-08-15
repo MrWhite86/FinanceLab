@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "lucide-react": "^0.562.0",
+    "pdfjs-dist": "^6.2.108",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "recharts": "^2.12.0"
+    "recharts": "^2.12.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

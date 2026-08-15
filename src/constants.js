@@ -1,6 +1,7 @@
 // Valori di default e palette colori condivisi da tutta l'app.
 // Non c'è logica qui dentro: sono solo dati statici, separati dal codice per essere
 // facili da ritrovare e modificare senza scavare tra i componenti.
+import { PAROLE_CHIAVE_IMPORTO_DEFAULT, PAROLE_CHIAVE_DATA_DEFAULT } from './ocr/interpretaBolletta';
 
 /**
  * Configurazione iniziale di un nuovo utente (usata da App.jsx finché non viene
@@ -18,6 +19,13 @@
  *   e il proprio numero di snapshot da conservare (1-3). backupCloud si attiva solo se "attivo" è
  *   true e ha un percorso proprio (es. dentro iCloud Drive/Google Drive); backupLocale usa sempre
  *   percorsoSalvataggio. "ultimoBackup" (ISO) serve solo alla frequenza 'giornaliero'.
+ * - ocr: impostazioni per l'estrazione automatica di importo/scadenza dai documenti allegati
+ *   (vedi src/ocr/). paroleChiaveImporto/paroleChiaveData sono le liste (in ordine di priorità)
+ *   usate da interpretaBolletta.js per riconoscere il candidato più probabile. modelliFornitore
+ *   è la "memoria per fornitore" ({ [fornitore]: { paroleChiaveImporto: [...], paroleChiaveData: [...] } }):
+ *   quando l'utente conferma un candidato specifico per un fornitore, la parola chiave che lo ha
+ *   individuato viene anteposta alle liste globali per quel fornitore, cosi' le estrazioni
+ *   successive dello stesso fornitore migliorano nel tempo.
  * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
  *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
  * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
@@ -31,6 +39,11 @@ export const INITIAL_CONFIG = {
   fileCatturaGestiti: [],
   backupLocale: { frequenza: 'nessuno', numeroBackup: 1, ultimoBackup: null },
   backupCloud: { attivo: false, percorso: '', frequenza: 'nessuno', numeroBackup: 1, ultimoBackup: null },
+  ocr: {
+    paroleChiaveImporto: PAROLE_CHIAVE_IMPORTO_DEFAULT,
+    paroleChiaveData: PAROLE_CHIAVE_DATA_DEFAULT,
+    modelliFornitore: {},
+  },
   tags: [
     { nome: "stipendio", tipo: "entrata" },
     { nome: "bollette", tipo: "uscita" },

@@ -27,6 +27,10 @@ import { INITIAL_CONFIG, COLORS } from './constants';
 import { parseImportedData } from './importUtils';
 import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
 import { nomeCartellaBackup, cartelleDaRimuovere, backupDaEseguireAllAvvio } from './backupUtils';
+// I moduli OCR (tesseract.js/pdfjs-dist, pesanti) si caricano solo quando servono davvero (import
+// dinamico dentro estraiDatiOcr/impareOcrFornitore), non ad ogni avvio dell'app: stesso principio
+// già usato per Dashboard.jsx (lazy) con recharts, per non appesantire il caricamento iniziale
+// di chi non usa mai "Documenti da Importare".
 
 // Dashboard include recharts (libreria di grafici pesante): caricata solo quando serve davvero,
 // non al primo avvio dell'app (login/impostazioni/ricerca non ne hanno bisogno).
@@ -539,6 +543,82 @@ export default function App() {
     }
   };
 
+  // --- ESTRAZIONE AUTOMATICA DATI (OCR offline, vedi src/ocr/) ---
+  /**
+   * Legge un file ancora nella cartella di cattura (non ancora copiato in backup/): serve per
+   * poterlo analizzare con l'OCR PRIMA di decidere se/come creare il record, senza doverlo
+   * prima allegare "alla cieca".
+   */
+  const leggiFileCattura = async (nomeFile) => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return null; }
+    try {
+      const { readBinaryFile } = window.__TAURI__.fs;
+      const { join } = window.__TAURI__.path;
+      return await readBinaryFile(await join(config.percorsoCattura, nomeFile));
+    } catch {
+      showToast("Impossibile leggere il file per l'estrazione.");
+      return null;
+    }
+  };
+
+  /**
+   * Esegue l'OCR su un file (byte) e propone i candidati per importo/data, dando priorità alle
+   * parole chiave "imparate" per un fornitore specifico (se indicato) prima di quelle globali di
+   * config.ocr. Nessun candidato viene applicato automaticamente: la scelta finale resta sempre
+   * all'utente in Importa.jsx. Se il file è un PDF, lo rasterizza prima pagina per pagina (l'OCR
+   * sa leggere solo immagini) e concatena il testo di tutte le pagine: l'importo/scadenza di una
+   * bolletta non è sempre nella prima.
+   */
+  const estraiDatiOcr = async (bytes, mimeType, fornitore) => {
+    const { estraiTestoDaImmagine } = await import('./ocr/motoreOcr');
+    const { trovaImporti, trovaDate } = await import('./ocr/interpretaBolletta');
+    let testo;
+    if (mimeType === 'application/pdf') {
+      const { rasterizzaPaginePdf } = await import('./ocr/rasterizzaPdf');
+      const immaginiPagine = await rasterizzaPaginePdf(bytes);
+      const testiPagine = [];
+      for (const immagine of immaginiPagine) {
+        testiPagine.push(await estraiTestoDaImmagine(immagine, 'image/png'));
+      }
+      testo = testiPagine.join('\n');
+    } else {
+      testo = await estraiTestoDaImmagine(bytes, mimeType);
+    }
+    const chiaveFornitore = (fornitore || '').trim().toLowerCase();
+    const modello = chiaveFornitore ? config.ocr?.modelliFornitore?.[chiaveFornitore] : null;
+    const paroleImporto = [...(modello?.paroleChiaveImporto || []), ...(config.ocr?.paroleChiaveImporto || [])];
+    const paroleData = [...(modello?.paroleChiaveData || []), ...(config.ocr?.paroleChiaveData || [])];
+    return {
+      testo,
+      candidatiImporto: trovaImporti(testo, paroleImporto),
+      candidatiData: trovaDate(testo, paroleData),
+    };
+  };
+
+  /**
+   * Quando l'utente conferma manualmente un candidato OCR per un fornitore, ricava dal suo
+   * contesto una parola chiave e la antepone alla lista di quel fornitore (vedi ocr.modelliFornitore
+   * in constants.js): le estrazioni successive per lo stesso fornitore la useranno per prima.
+   */
+  const impareOcrFornitore = async (fornitore, tipo, candidato) => {
+    const chiaveFornitore = (fornitore || '').trim().toLowerCase();
+    const { estraiParolaChiaveDaContesto } = await import('./ocr/interpretaBolletta');
+    const parolaChiave = estraiParolaChiaveDaContesto(candidato.contesto, candidato.testoOriginale);
+    if (!chiaveFornitore || !parolaChiave) return;
+    setConfig(prev => {
+      const modelloAttuale = prev.ocr?.modelliFornitore?.[chiaveFornitore] || { paroleChiaveImporto: [], paroleChiaveData: [] };
+      const listaAttuale = modelloAttuale[tipo] || [];
+      const nuovaLista = [parolaChiave, ...listaAttuale.filter(p => p !== parolaChiave)];
+      return {
+        ...prev,
+        ocr: {
+          ...prev.ocr,
+          modelliFornitore: { ...prev.ocr?.modelliFornitore, [chiaveFornitore]: { ...modelloAttuale, [tipo]: nuovaLista } },
+        },
+      };
+    });
+  };
+
   /** File attualmente mostrato nella finestra di anteprima ({ nome, dataUri, tipo }), o null se chiusa. */
   const [anteprima, setAnteprima] = useState(null);
 
@@ -619,6 +699,9 @@ export default function App() {
                 onAllegaEsistente={allegaFileCatturaEsistente}
                 onCreaRecord={creaRecordDaCattura}
                 onIgnoraFile={segnaFileCatturaGestito}
+                onLeggiFileCattura={leggiFileCattura}
+                onEstraiDatiOcr={estraiDatiOcr}
+                onImparaOcrFornitore={impareOcrFornitore}
                 showToast={showToast}
               />
             )}

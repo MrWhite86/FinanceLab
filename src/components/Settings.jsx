@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Save, Trash2, Unlock, Upload } from 'lucide-react';
+import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Save, ScanText, Trash2, Unlock, Upload, X } from 'lucide-react';
 
 /**
  * SettingsView: sezioni indipendenti, tutte agiscono sull'oggetto "config" passato da
@@ -9,13 +9,17 @@ import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Save, Trash
  * 3. Cartella di Cattura - vedi Importa.jsx.
  * 4. Backup Locale / Backup Cloud - backup automatico periodico (frequenza + rotazione
  *    indipendenti per le due destinazioni, vedi eseguiBackup in App.jsx).
- * 5. Gestione Profilo - cambio username/password (la vera logica è in App.jsx: handleUpdateProfile).
- * 6. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
+ * 5. Estrazione Automatica (OCR) - parole chiave usate da src/ocr/interpretaBolletta.js per
+ *    riconoscere importo/scadenza nei documenti (vedi anche onEstraiDatiOcr in App.jsx).
+ * 6. Gestione Profilo - cambio username/password (la vera logica è in App.jsx: handleUpdateProfile).
+ * 7. Gestione Tag - crea/elimina tag e ne cambia il "tipo" (entrata/uscita/neutro), che è
  *    poi ciò che useFinance.js usa per decidere se un movimento aumenta o riduce il saldo.
  */
 export default function SettingsView({ config, spese, setConfig, user, updateProfile, importaJSON, onSelezionaCartellaCattura, onSelezionaCartellaBackupCloud, onEseguiBackup, styles, isMobile, newUsername, setNewUsername, newPassword, setNewPassword }) {
   const isAdmin = user.username === 'admin';
   const [nuovoTag, setNuovaTag] = useState('');
+  const [nuovaParolaImporto, setNuovaParolaImporto] = useState('');
+  const [nuovaParolaData, setNuovaParolaData] = useState('');
   /** Il percorso di backup è di sola lettura finché l'admin non lo sblocca esplicitamente col lucchetto, per evitare modifiche accidentali. */
   const [bloccaPercorso, setBloccaPercorso] = useState(true);
 
@@ -23,6 +27,15 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
   const aggiornaBackup = (chiave, campi) => setConfig({ ...config, [chiave]: { ...config[chiave], ...campi } });
 
   const formatUltimoBackup = (iso) => iso ? new Intl.DateTimeFormat('it-IT', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)) : 'Mai eseguito';
+
+  /** Aggiunge/rimuove una parola chiave OCR (campo 'paroleChiaveImporto' o 'paroleChiaveData' dentro config.ocr). */
+  const aggiungiParolaChiaveOcr = (campo, parola) => {
+    if (!parola.trim() || config.ocr[campo].includes(parola.trim().toLowerCase())) return;
+    setConfig({ ...config, ocr: { ...config.ocr, [campo]: [...config.ocr[campo], parola.trim().toLowerCase()] } });
+  };
+  const rimuoviParolaChiaveOcr = (campo, parola) => {
+    setConfig({ ...config, ocr: { ...config.ocr, [campo]: config.ocr[campo].filter(p => p !== parola) } });
+  };
 
   /** Click sul pallino colorato di un tag: fa scorrere il suo tipo tra entrata -> uscita -> neutro -> (di nuovo entrata). */
   const toggleTipoCategoria = (nome) => {
@@ -172,6 +185,51 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <input type="text" value={config.percorsoCattura || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: '#f1f5f9', color: '#94a3b8', flex: 1 }} />
           <button onClick={onSelezionaCartellaCattura} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><FolderSync size={18}/> Scegli Cartella</button>
+        </div>
+      </div>
+
+      <div style={styles.card}>
+        <h3><ScanText size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} />Estrazione Automatica (OCR)</h3>
+        <p style={{ fontSize: '12px', color: '#64748b', marginTop: 0, marginBottom: '15px' }}>
+          Parole chiave usate per riconoscere l&rsquo;importo e la scadenza nei documenti analizzati con
+          &ldquo;Estrai dati automaticamente&rdquo; (Documenti da Importare). Le prime della lista contano di più:
+          l&rsquo;app le riordina da sola quando confermi un candidato per un fornitore specifico.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px' }}>
+          <div>
+            <label style={styles.label}>PAROLE CHIAVE IMPORTO</label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+              <input type="text" value={nuovaParolaImporto} onChange={e => setNuovaParolaImporto(e.target.value)}
+                     onKeyDown={e => { if (e.key === 'Enter') { aggiungiParolaChiaveOcr('paroleChiaveImporto', nuovaParolaImporto); setNuovaParolaImporto(''); } }}
+                     style={styles.input} placeholder="es. totale bolletta" />
+              <button onClick={() => { aggiungiParolaChiaveOcr('paroleChiaveImporto', nuovaParolaImporto); setNuovaParolaImporto(''); }} style={{ ...styles.btn(config.coloreTema), width: 'auto' }}>Aggiungi</button>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {config.ocr?.paroleChiaveImporto?.map(parola => (
+                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: '#475569' }}>
+                  {parola}
+                  <X size={12} style={{ cursor: 'pointer' }} onClick={() => rimuoviParolaChiaveOcr('paroleChiaveImporto', parola)} />
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={styles.label}>PAROLE CHIAVE SCADENZA</label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+              <input type="text" value={nuovaParolaData} onChange={e => setNuovaParolaData(e.target.value)}
+                     onKeyDown={e => { if (e.key === 'Enter') { aggiungiParolaChiaveOcr('paroleChiaveData', nuovaParolaData); setNuovaParolaData(''); } }}
+                     style={styles.input} placeholder="es. scade il" />
+              <button onClick={() => { aggiungiParolaChiaveOcr('paroleChiaveData', nuovaParolaData); setNuovaParolaData(''); }} style={{ ...styles.btn(config.coloreTema), width: 'auto' }}>Aggiungi</button>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {config.ocr?.paroleChiaveData?.map(parola => (
+                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: '#475569' }}>
+                  {parola}
+                  <X size={12} style={{ cursor: 'pointer' }} onClick={() => rimuoviParolaChiaveOcr('paroleChiaveData', parola)} />
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

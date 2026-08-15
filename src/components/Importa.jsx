@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, FileImage, FileText, FolderSync, Inbox, ListPlus, RefreshCw, Search, Tag, X } from 'lucide-react';
+import { Check, FileImage, FileText, FolderSync, Inbox, ListPlus, Loader2, RefreshCw, ScanText, Search, Tag, X } from 'lucide-react';
 import { mimeTypeDaNomeFile } from '../fileUtils';
 
 /**
@@ -9,7 +9,7 @@ import { mimeTypeDaNomeFile } from '../fileUtils';
  * - crearne uno nuovo, con un mini-form che ricalca il form principale di Dashboard.jsx.
  * Non mostra/legge il contenuto dei file (nessuna anteprima qui): serve solo a smistarli.
  */
-export default function ImportaView({ fileDaImportare, percorsoCattura, spese, config, styles, isMobile, onRiscansiona, onAllegaEsistente, onCreaRecord, onIgnoraFile, showToast }) {
+export default function ImportaView({ fileDaImportare, percorsoCattura, spese, config, styles, isMobile, onRiscansiona, onAllegaEsistente, onCreaRecord, onIgnoraFile, onLeggiFileCattura, onEstraiDatiOcr, onImparaOcrFornitore, showToast }) {
   /** Nome del file il cui pannello di gestione è aperto, o null se nessuno. */
   const [fileAttivo, setFileAttivo] = useState(null);
   /** 'allega' | 'crea' | null: quale delle due modalità è aperta per fileAttivo. */
@@ -18,14 +18,52 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
   const [ricercaEsistente, setRicercaEsistente] = useState('');
   const annoDefault = config.anniAttivi?.[0] || new Date().getFullYear().toString();
   const [nuovoRecord, setNuovoRecord] = useState({ anno: annoDefault, importo: '', data: `${annoDefault}-01-01`, nota: '', tags: [] });
+  const [fornitore, setFornitore] = useState('');
+  const [estraendoOcr, setEstraendoOcr] = useState(false);
+  /** Candidati importo/data trovati dall'ultima estrazione OCR, o null se non ancora eseguita. */
+  const [risultatoOcr, setRisultatoOcr] = useState(null);
 
   const apriPannello = (nomeFile, mod) => {
     setFileAttivo(nomeFile);
     setModalita(mod);
     setRicercaEsistente('');
+    setFornitore('');
+    setRisultatoOcr(null);
     setNuovoRecord({ anno: annoDefault, importo: '', data: `${annoDefault}-01-01`, nota: nomeFile.replace(/\.[^.]+$/, ''), tags: [] });
   };
   const chiudiPannello = () => { setFileAttivo(null); setModalita(null); };
+
+  /** Legge il file, esegue l'OCR e mostra i candidati trovati: non riempie mai i campi da solo. */
+  const estraiDatiAutomaticamente = async () => {
+    setEstraendoOcr(true);
+    setRisultatoOcr(null);
+    try {
+      const bytes = await onLeggiFileCattura(fileAttivo);
+      if (!bytes) return;
+      const risultato = await onEstraiDatiOcr(bytes, mimeTypeDaNomeFile(fileAttivo), fornitore);
+      setRisultatoOcr(risultato);
+      if (risultato.candidatiImporto.length === 0 && risultato.candidatiData.length === 0) {
+        showToast("Nessun importo o data riconosciuto nel documento.");
+      }
+    } catch {
+      showToast("Errore durante l'estrazione automatica.");
+    } finally {
+      setEstraendoOcr(false);
+    }
+  };
+
+  const scegliCandidatoImporto = (candidato) => {
+    setNuovoRecord(prev => ({ ...prev, importo: String(candidato.valore) }));
+    onImparaOcrFornitore(fornitore, 'paroleChiaveImporto', candidato);
+  };
+  const scegliCandidatoData = (candidato) => {
+    if (candidato.valore >= `${nuovoRecord.anno}-01-01` && candidato.valore <= `${nuovoRecord.anno}-12-31`) {
+      setNuovoRecord(prev => ({ ...prev, data: candidato.valore }));
+    } else {
+      setNuovoRecord(prev => ({ ...prev, anno: candidato.valore.substring(0, 4), data: candidato.valore }));
+    }
+    onImparaOcrFornitore(fornitore, 'paroleChiaveData', candidato);
+  };
 
   const risultatiRicerca = ricercaEsistente.trim().length === 0 ? [] : spese
     .filter(s => !s.contenitoreId && (s.nota || '').toLowerCase().includes(ricercaEsistente.trim().toLowerCase()))
@@ -74,7 +112,9 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {fileDaImportare.map(nomeFile => {
-            const isImmagine = mimeTypeDaNomeFile(nomeFile).startsWith('image/');
+            const mimeType = mimeTypeDaNomeFile(nomeFile);
+            const isImmagine = mimeType.startsWith('image/');
+            const supportaOcr = isImmagine || mimeType === 'application/pdf';
             const pannelloAperto = fileAttivo === nomeFile ? modalita : null;
 
             return (
@@ -128,6 +168,51 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
 
                 {pannelloAperto === 'crea' && (
                   <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                    {supportaOcr && (
+                      <div style={{ marginBottom: '15px', padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto', gap: '10px', alignItems: 'end', marginBottom: risultatoOcr ? '12px' : 0 }}>
+                          <div>
+                            <label style={styles.label}>FORNITORE (opzionale, migliora i suggerimenti nel tempo)</label>
+                            <input type="text" value={fornitore} onChange={e => setFornitore(e.target.value)} style={styles.input} placeholder="es. Enel, TIM..." />
+                          </div>
+                          <button onClick={estraiDatiAutomaticamente} disabled={estraendoOcr} style={{ ...styles.btn('#4f46e5'), width: 'auto', opacity: estraendoOcr ? 0.6 : 1, cursor: estraendoOcr ? 'default' : 'pointer' }}>
+                            {estraendoOcr ? <Loader2 size={16} className="lucide-spin" /> : <ScanText size={16} />}
+                            {estraendoOcr ? 'Analisi in corso...' : 'Estrai dati automaticamente'}
+                          </button>
+                        </div>
+
+                        {risultatoOcr && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {risultatoOcr.candidatiImporto.length > 0 && (
+                              <div>
+                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8' }}>IMPORTI TROVATI (clicca quello giusto):</span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                                  {risultatoOcr.candidatiImporto.slice(0, 5).map((c, i) => (
+                                    <span key={i} title={c.contesto} onClick={() => scegliCandidatoImporto(c)}
+                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                      € {c.valore.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {risultatoOcr.candidatiData.length > 0 && (
+                              <div>
+                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8' }}>DATE TROVATE (clicca quella giusta):</span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                                  {risultatoOcr.candidatiData.slice(0, 5).map((c, i) => (
+                                    <span key={i} title={c.contesto} onClick={() => scegliCandidatoData(c)}
+                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                      {c.valore.split('-').reverse().join('/')}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '90px 120px 150px 1fr', gap: '12px', marginBottom: '15px' }}>
                       <div>
                         <label style={styles.label}>ANNO</label>
