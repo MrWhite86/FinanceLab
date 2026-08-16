@@ -29,6 +29,7 @@ import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
 import { nomeCartellaBackup, cartelleDaRimuovere, backupDaEseguireAllAvvio } from './backupUtils';
 import { scuraColore } from './colorUtils';
 import { interpretaScontrino, CATEGORIE_DEFAULT } from './ocr/interpretaScontrino';
+import { occorrenzeMancanti } from './operazioniPianificateUtils';
 // I moduli OCR (tesseract.js/pdfjs-dist, pesanti) si caricano solo quando servono davvero (import
 // dinamico dentro estraiDatiOcr/impareOcrFornitore), non ad ogni avvio dell'app: stesso principio
 // già usato per Dashboard.jsx (lazy) con recharts, per non appesantire il caricamento iniziale
@@ -50,6 +51,27 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState({ show: false, type: 'confirm', title: '', msg: '', onConfirm: null, inputValue: '' });
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
+
+  /** Per ogni operazione pianificata attiva, calcola i movimenti da creare per ciascuna occorrenza
+   * mancata (vedi occorrenzeMancanti in operazioniPianificateUtils.js) e la nuova "ultimaEsecuzione"
+   * di ciascuna (non un timestamp globale, cosi' ognuna segue il proprio calendario indipendentemente
+   * dalle altre). Funzione pura sui dati passati (non legge config/spese dallo stato del componente):
+   * va chiamata sui dati appena caricati da localStorage nell'effetto di login qui sotto, non in un
+   * effetto separato - vedi il commento lì per il perché. */
+  const materializzaOperazioniPianificate = (operazioniPianificate) => {
+    const oggiISO = new Date().toISOString().slice(0, 10);
+    const nuoviMovimenti = [];
+    const operazioniAggiornate = (operazioniPianificate || []).map(op => {
+      const occorrenze = occorrenzeMancanti(op, oggiISO);
+      if (occorrenze.length === 0) return op;
+      occorrenze.forEach(dataOccorrenza => {
+        const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
+        nuoviMovimenti.push({ id, importo: Number(op.importo), tags: op.tags, data: dataOccorrenza, nota: op.nome });
+      });
+      return { ...op, ultimaEsecuzione: occorrenze[occorrenze.length - 1] };
+    });
+    return { nuoviMovimenti, operazioniAggiornate };
+  };
 
   // Campi del form "Gestione Profilo" in Settings.jsx (nome utente/password da aggiornare).
   const [newUsername, setNewUsername] = useState('');
@@ -77,6 +99,18 @@ export default function App() {
   /** Tutti i movimenti dell'utente loggato, di tutti gli anni (Dashboard.jsx filtra quelli dell'anno aperto). */
   const [spese, setSpese] = useState([]);
 
+  /** Utente per cui la config REALE (letta da localStorage, non i default) è già stata caricata in
+   * questa sessione — vedi il commento nell'effetto di caricamento qui sotto e nel controllo backup
+   * "ad ogni avvio" più in basso, che lo usa per evitare di scattare troppo presto. Deve essere
+   * stato React (non un ref): un ref mutato dentro l'effetto di caricamento sarebbe visibile
+   * SINCRONAMENTE anche agli altri effetti dello stesso giro di commit (quello in cui currentUser è
+   * appena cambiato), mentre "config" lì è ancora il valore precedente perché setConfig si applica
+   * solo al render successivo — un ref "sblocca" il controllo un istante troppo presto. Uno stato,
+   * invece, si applica in batch insieme a setConfig/setSpese (stesso effetto, stesso giro), quindi
+   * diventa visibile agli altri effetti esattamente nello stesso render in cui anche "config" è già
+   * aggiornato: è quello che si vuole davvero. */
+  const [configCaricatoPer, setConfigCaricatoPer] = useState(null);
+
   // Caricamento dati specifico per utente al login: sincronizza lo stato React con localStorage
   // (sistema esterno) ogni volta che cambia l'utente loggato, in un componente che non si rimonta.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -100,19 +134,40 @@ export default function App() {
         const globalRoot = localStorage.getItem('finance_lab_global_root');
         if (globalRoot) currentConfig.percorsoSalvataggio = globalRoot;
       }
-      setConfig(currentConfig);
 
+      let speseCaricate = [];
       if (savedData) {
-        let parsedSpese = JSON.parse(savedData);
         // MIGRAZIONE: Converte il campo 'categoria' (stringa) nel nuovo array 'tags'
-        parsedSpese = parsedSpese.map(s => {
+        speseCaricate = JSON.parse(savedData).map(s => {
           if (s.categoria && (!s.tags || s.tags.length === 0)) {
             return { ...s, tags: [s.categoria], categoria: undefined };
           }
           return s;
         });
-        setSpese(parsedSpese);
-      } else setSpese([]);
+      }
+
+      // Operazioni Pianificate: la materializzazione delle occorrenze mancate va fatta QUI, nello
+      // stesso effetto di caricamento, sui dati appena letti da localStorage - non in un secondo
+      // effetto separato gated su [currentUser, spese] (come backupAvvioEseguitoRef qui sotto).
+      // Un secondo effetto scatterebbe anche in QUESTO stesso giro di commit (currentUser è già
+      // cambiato), quando "config"/"spese" nel suo closure sono ancora i valori di default del
+      // render precedente (setConfig/setSpese non hanno ancora effetto sullo stesso giro di
+      // effetti): marcherebbe l'utente come "già controllato" prima ancora di aver letto la sua
+      // config reale, senza mai materializzare nulla. Calcolando qui, sui valori locali appena
+      // letti, il problema non si pone.
+      const { nuoviMovimenti, operazioniAggiornate } = materializzaOperazioniPianificate(currentConfig.operazioniPianificate);
+      currentConfig.operazioniPianificate = operazioniAggiornate;
+      if (nuoviMovimenti.length > 0) {
+        speseCaricate = [...speseCaricate, ...nuoviMovimenti];
+        showToast(`${nuoviMovimenti.length} movimento/i creato/i da operazioni pianificate.`);
+      }
+
+      setConfig(currentConfig);
+      setSpese(speseCaricate);
+      // Segnala (in batch con setConfig/setSpese qui sopra, vedi il commento sulla dichiarazione di
+      // questo stato) che per questo utente la config REALE è ora disponibile: il controllo backup
+      // "ad ogni avvio"/"giornaliero" qui sotto lo aspetta prima di leggere config.backupLocale.
+      setConfigCaricatoPer(currentUser);
 
       // Inizializza i campi di modifica profilo con il nome utente corrente
       setNewUsername(currentUser);
@@ -275,12 +330,13 @@ export default function App() {
   };
 
   // Controllo "ad ogni avvio"/"giornaliero": una sola volta per sessione di login (non ad ogni
-  // modifica delle impostazioni). Aspetta che spese sia stato ricaricato da localStorage, cosi'
-  // config riflette già i dati salvati e non i default iniziali.
+  // modifica delle impostazioni). Aspetta che configCaricatoPer confermi che "config" riflette già i
+  // dati salvati (non i default iniziali) prima di leggere config.backupLocale — vedi il commento
+  // sulla dichiarazione di configCaricatoPer per il perché è uno stato e non un ref.
   const backupAvvioEseguitoRef = useRef(new Set());
   /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (!currentUser || backupAvvioEseguitoRef.current.has(currentUser)) return;
+    if (!currentUser || configCaricatoPer !== currentUser || backupAvvioEseguitoRef.current.has(currentUser)) return;
     backupAvvioEseguitoRef.current.add(currentUser);
     if (backupDaEseguireAllAvvio(config.backupLocale?.frequenza, config.backupLocale?.ultimoBackup)) {
       eseguiBackup('locale');
@@ -288,7 +344,7 @@ export default function App() {
     if (config.backupCloud?.attivo && backupDaEseguireAllAvvio(config.backupCloud?.frequenza, config.backupCloud?.ultimoBackup)) {
       eseguiBackup('cloud');
     }
-  }, [currentUser, spese]);
+  }, [currentUser, spese, configCaricatoPer]);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   // "Ad ogni modifica": backup automatico "debounced" ~2s dopo l'ultima modifica ai MOVIMENTI
@@ -717,19 +773,32 @@ export default function App() {
   // questo oggetto, senza if sparsi in ogni componente.
   const s = useMemo(() => {
     const scuro = config.temaScuro;
+    const cardBg = scuro ? '#262626' : '#ffffff';
+    const testo = scuro ? '#fafafa' : '#171717';
+    const border = scuro ? '#404040' : '#e5e5e5';
     return {
       scuro,
       bg: scuro ? '#171717' : '#fafafa',
       bgSottile: scuro ? '#1f1f1f' : '#fafafa', // pannelli secondari, aree tratteggiate, hover leggero
       bgSottile2: scuro ? '#262626' : '#f5f5f5', // un filo piu' presente (chip non selezionati, intestazioni tabella)
-      border: scuro ? '#404040' : '#e5e5e5',
+      border,
       borderForte: scuro ? '#525252' : '#d4d4d4',
-      testo: scuro ? '#fafafa' : '#171717',
+      testo,
       testoMuto: '#737373', // grigio medio, gia' leggibile sia su sfondo chiaro che scuro
-      card: { background: scuro ? '#262626' : '#ffffff', borderRadius: '16px', padding: '20px', border: `1px solid ${scuro ? '#404040' : '#e5e5e5'}`, marginBottom: '20px' },
+      card: { background: cardBg, borderRadius: '16px', padding: '20px', border: `1px solid ${border}`, marginBottom: '20px' },
       input: { padding: '12px 16px', borderRadius: '10px', border: `1px solid ${scuro ? '#525252' : '#d4d4d4'}`, background: scuro ? '#171717' : '#ffffff', color: scuro ? '#fafafa' : '#171717', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
       label: { fontSize: '11px', fontWeight: '700', color: '#a3a3a3', marginBottom: '6px', display: 'block' },
-      btn: (bg) => ({ padding: '12px 16px', background: bg, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }),
+      // Sfondo = superficie su cui il bottone poggia (non piu' un riempimento pieno col colore
+      // passato): "bg" resta il nome del parametro per non toccare i 20+ punti di chiamata
+      // esistenti, ma ora serve solo per il bordo/testo in hover (--btn-accento, vedi index.css
+      // e la classe "arkiv-btn" applicata da ogni chiamante). Nessun bottone (nemmeno quelli
+      // "primari" come Accedi) ha un trattamento diverso: uniformità totale, per scelta esplicita.
+      // fontSize esplicito: i browser danno ai <button> una dimensione di default (13.3333px) che
+      // NON viene ereditata dal contesto, a differenza di <label>/<div> (usati altrove per bottoni
+      // "a scheda" come Importa in Impostazioni, vedi Settings.jsx): senza fissarla qui, un bottone
+      // fatto con <label> risulta visibilmente più grande di uno fatto con <button> a parità di
+      // padding, perché eredita invece la dimensione ambiente (di solito 16px, il default del body).
+      btn: (bg) => ({ padding: '12px 16px', background: cardBg, color: testo, border: `1px solid ${border}`, borderRadius: '10px', fontSize: '13.3333px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', '--btn-accento': bg }),
       th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#a3a3a3', fontSize: '11px', fontWeight: '700', borderBottom: `2px solid ${scuro ? '#404040' : '#f5f5f5'}` }),
     };
   }, [config.temaScuro]);
@@ -762,7 +831,7 @@ export default function App() {
           {/* Overlay scuro dietro al menu mobile aperto: cliccandolo si chiude */}
           {isMobile && isMenuOpen && <div onClick={() => setIsMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 90, backdropFilter: 'blur(2px)' }} />}
 
-          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} coloreScuro={coloreScuro} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} conteggioDaImportare={fileDaImportare.length} />
+          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} coloreScuro={coloreScuro} chiaro={!config.temaScuro} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} conteggioDaImportare={fileDaImportare.length} />
 
           <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px' : '30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             {isMobile && (
@@ -799,7 +868,7 @@ export default function App() {
                 onEstraiDatiOcr={estraiDatiOcr}
                 onEstraiScontrino={estraiScontrino}
                 onImparaOcrFornitore={impareOcrFornitore}
-                categorieScontrino={Object.keys(CATEGORIE_DEFAULT)}
+                categorieScontrino={config.categorieSpesa}
                 showToast={showToast}
               />
             )}
@@ -809,7 +878,7 @@ export default function App() {
                 config={config} spese={spese} setConfig={setConfig} user={{ username: currentUser }}
                 updateProfile={handleUpdateProfile} importaJSON={importaJSON} onSelezionaCartellaCattura={selezionaCartellaCattura}
                 onSelezionaCartellaBackupCloud={selezionaCartellaBackupCloud} onEseguiBackup={eseguiBackup} styles={s} isMobile={isMobile}
-                newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword}
+                newUsername={newUsername} setNewUsername={setNewUsername} newPassword={newPassword} setNewPassword={setNewPassword} showToast={showToast}
               />
             )}
 

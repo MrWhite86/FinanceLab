@@ -145,6 +145,16 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
     setNuovoRecord(prev => ({ ...prev, tags: prev.tags.includes(nome) ? prev.tags.filter(t => t !== nome) : [...prev.tags, nome] }));
   };
 
+  /** Stile per i bottoni "a scheda" (Allega/Crea, Documento/Scontrino): non sono azioni ma stati
+   * selezionabili, quindi restano fuori da .arkiv-btn (che è per le azioni) — sfondo sempre
+   * neutro, ma bordo/testo nel colore tema quando attivi, per restare leggibili come selezionati
+   * anche senza passarci sopra col mouse. */
+  const stileToggle = (attivo) => ({
+    ...styles.btn(config.coloreTema),
+    border: `1px solid ${attivo ? config.coloreTema : styles.border}`,
+    color: attivo ? config.coloreTema : styles.testoMuto,
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={styles.card}>
@@ -155,7 +165,7 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
               {percorsoCattura ? `Cartella di cattura: ${percorsoCattura}` : 'Nessuna cartella di cattura configurata (Impostazioni → Cartella di Cattura)'}
             </span>
           </div>
-          <button onClick={onRiscansiona} style={{ ...styles.btn('#525252'), width: 'auto' }}><RefreshCw size={16}/> Aggiorna</button>
+          <button onClick={onRiscansiona} className="arkiv-btn" style={{ ...styles.btn(config.coloreTema), width: 'auto' }}><RefreshCw size={16}/> Aggiorna</button>
         </div>
       </div>
 
@@ -187,10 +197,10 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                     <span style={{ fontWeight: '700', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeFile}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={() => apriPannello(nomeFile, 'allega')} style={{ ...styles.btn(pannelloAperto === 'allega' ? config.coloreTema : styles.bgSottile2), color: pannelloAperto === 'allega' ? '#fff' : styles.testoMuto, width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
+                    <button onClick={() => apriPannello(nomeFile, 'allega')} style={{ ...stileToggle(pannelloAperto === 'allega'), width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
                       <Search size={14}/> Allega a esistente
                     </button>
-                    <button onClick={() => apriPannello(nomeFile, 'crea')} style={{ ...styles.btn(pannelloAperto === 'crea' ? config.coloreTema : styles.bgSottile2), color: pannelloAperto === 'crea' ? '#fff' : styles.testoMuto, width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
+                    <button onClick={() => apriPannello(nomeFile, 'crea')} style={{ ...stileToggle(pannelloAperto === 'crea'), width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
                       <ListPlus size={14}/> Crea nuovo record
                     </button>
                     <X size={16} color={styles.borderForte} style={{ cursor: 'pointer' }} title="Ignora questo file (non lo importa, ma non ricompare più)" onClick={() => onIgnoraFile(nomeFile)} />
@@ -233,10 +243,10 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                     {supportaOcr && (
                       <div style={{ marginBottom: '15px', padding: '12px', background: styles.card.background, borderRadius: '10px', border: `1px solid ${styles.border}` }}>
                         <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-                          <button onClick={() => cambiaTipoEstrazione('documento')} style={{ ...styles.btn(tipoEstrazione === 'documento' ? config.coloreTema : styles.bgSottile2), color: tipoEstrazione === 'documento' ? '#fff' : styles.testoMuto, width: 'auto', fontSize: '12px', padding: '7px 12px' }}>
+                          <button onClick={() => cambiaTipoEstrazione('documento')} style={{ ...stileToggle(tipoEstrazione === 'documento'), width: 'auto', fontSize: '12px', padding: '7px 12px' }}>
                             <FileText size={14}/> Documento
                           </button>
-                          <button onClick={() => cambiaTipoEstrazione('scontrino')} style={{ ...styles.btn(tipoEstrazione === 'scontrino' ? config.coloreTema : styles.bgSottile2), color: tipoEstrazione === 'scontrino' ? '#fff' : styles.testoMuto, width: 'auto', fontSize: '12px', padding: '7px 12px' }}>
+                          <button onClick={() => cambiaTipoEstrazione('scontrino')} style={{ ...stileToggle(tipoEstrazione === 'scontrino'), width: 'auto', fontSize: '12px', padding: '7px 12px' }}>
                             <ShoppingCart size={14}/> Scontrino
                           </button>
                         </div>
@@ -248,7 +258,7 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                                 <label style={styles.label}>FORNITORE (opzionale, migliora i suggerimenti nel tempo)</label>
                                 <input type="text" value={fornitore} onChange={e => setFornitore(e.target.value)} style={styles.input} placeholder="es. Enel, TIM..." />
                               </div>
-                              <button onClick={estraiDatiAutomaticamente} disabled={estraendoOcr} style={{ ...styles.btn('#4f46e5'), width: 'auto', opacity: estraendoOcr ? 0.6 : 1, cursor: estraendoOcr ? 'default' : 'pointer' }}>
+                              <button onClick={estraiDatiAutomaticamente} disabled={estraendoOcr} className="arkiv-btn" style={{ ...styles.btn(config.coloreTema), width: 'auto', opacity: estraendoOcr ? 0.6 : 1, cursor: estraendoOcr ? 'default' : 'pointer' }}>
                                 {estraendoOcr ? <Loader2 size={16} className="lucide-spin" /> : <ScanText size={16} />}
                                 {estraendoOcr ? 'Analisi in corso...' : 'Estrai dati automaticamente'}
                               </button>
@@ -287,7 +297,7 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                           </>
                         ) : (
                           <>
-                            <button onClick={estraiScontrinoAutomaticamente} disabled={estraendoOcr} style={{ ...styles.btn('#4f46e5'), width: 'auto', opacity: estraendoOcr ? 0.6 : 1, cursor: estraendoOcr ? 'default' : 'pointer', marginBottom: '14px' }}>
+                            <button onClick={estraiScontrinoAutomaticamente} disabled={estraendoOcr} className="arkiv-btn" style={{ ...styles.btn(config.coloreTema), width: 'auto', opacity: estraendoOcr ? 0.6 : 1, cursor: estraendoOcr ? 'default' : 'pointer', marginBottom: '14px' }}>
                               {estraendoOcr ? <Loader2 size={16} className="lucide-spin" /> : <ScanText size={16} />}
                               {estraendoOcr ? 'Analisi in corso...' : 'Estrai righe automaticamente'}
                             </button>
@@ -308,7 +318,7 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                                   <Trash2 size={16} color={styles.borderForte} style={{ cursor: 'pointer' }} onClick={() => rimuoviRigaScontrino(riga.id)} />
                                 </div>
                               ))}
-                              <button onClick={aggiungiRigaScontrino} style={{ ...styles.btn(styles.bgSottile2), color: styles.testoMuto, width: 'auto', fontSize: '12px', padding: '7px 12px', alignSelf: 'flex-start' }}>
+                              <button onClick={aggiungiRigaScontrino} className="arkiv-btn" style={{ ...styles.btn(config.coloreTema), width: 'auto', fontSize: '12px', padding: '7px 12px', alignSelf: 'flex-start' }}>
                                 <Plus size={14}/> Aggiungi riga
                               </button>
                               {righeScontrino.length > 0 && (
@@ -374,7 +384,7 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                       </div>
                     )}
 
-                    <button onClick={tipoEstrazione === 'scontrino' ? confermaCreaRecordScontrino : confermaCreaRecord} style={{ ...styles.btn(config.coloreTema), width: 'auto' }}>
+                    <button onClick={tipoEstrazione === 'scontrino' ? confermaCreaRecordScontrino : confermaCreaRecord} className="arkiv-btn" style={{ ...styles.btn(config.coloreTema), width: 'auto' }}>
                       <Check size={16}/> {tipoEstrazione === 'scontrino' ? `Registra scontrino (${righeScontrino.filter(r => r.descrizione.trim() && Number(r.importo) > 0).length} voci)` : 'Crea Record'}
                     </button>
                   </div>

@@ -89,7 +89,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
             <span style={{ fontSize: '13px', fontWeight: '700', color: config.coloreTema }}>
               Associa {selectedLibraryTags.length} tag a {selectedRows.length} record selezionati
             </span>
-            <button onClick={applyTagsToSelected} style={styles.btn(config.coloreTema)}>APPLICA AI SELEZIONATI</button>
+            <button onClick={applyTagsToSelected} className="arkiv-btn" style={styles.btn(config.coloreTema)}>APPLICA AI SELEZIONATI</button>
           </div>
         )}
       </div>

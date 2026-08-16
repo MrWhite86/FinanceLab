@@ -2,6 +2,7 @@
 // Non c'è logica qui dentro: sono solo dati statici, separati dal codice per essere
 // facili da ritrovare e modificare senza scavare tra i componenti.
 import { PAROLE_CHIAVE_IMPORTO_DEFAULT, PAROLE_CHIAVE_DATA_DEFAULT } from './ocr/interpretaBolletta';
+import { CATEGORIE_DEFAULT } from './ocr/interpretaScontrino';
 
 /**
  * Configurazione iniziale di un nuovo utente (usata da App.jsx finché non viene
@@ -30,6 +31,13 @@ import { PAROLE_CHIAVE_IMPORTO_DEFAULT, PAROLE_CHIAVE_DATA_DEFAULT } from './ocr
  *   successive dello stesso fornitore migliorano nel tempo.
  * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
  *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
+ * - categorieSpesa: macro-categorie usate per classificare le righe-prodotto di uno scontrino
+ *   (vedi interpretaScontrino.js/Importa.jsx), seminate dalle chiavi di CATEGORIE_DEFAULT.
+ *   Indipendenti da "tags": qui non c'è un "tipo" entrata/uscita, solo un'etichetta descrittiva.
+ * - operazioniPianificate: movimenti ricorrenti automatici (stipendio, affitto, rate...), vedi
+ *   operazioniPianificateUtils.js/Settings.jsx. Ogni voce ha "tags" reali (non un flag
+ *   credito/debito a parte) e "ultimaEsecuzione" (ISO), aggiornata quando App.jsx materializza
+ *   le occorrenze mancate al login.
  * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
  * - temaScuro: modalità chiara/scura del contenuto principale (Dashboard/Impostazioni/Ricerca/
  *   Importa). Indipendente da coloreTema/coloreScuro, che riguardano solo la barra laterale e il
@@ -58,6 +66,8 @@ export const INITIAL_CONFIG = {
     { nome: "affitto", tipo: "uscita" },
     { nome: "documenti", tipo: "neutro" }
   ],
+  categorieSpesa: Object.keys(CATEGORIE_DEFAULT),
+  operazioniPianificate: [],
   anniAttivi: ['2026', '2025', '2024']
 };
 
@@ -68,3 +78,10 @@ export const INITIAL_CONFIG = {
  * cosi' il grafico principale segue sempre il tema scelto dall'utente.
  */
 export const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+/**
+ * Swatch precompilati per il selettore "Colore Accento" in Impostazioni > Grafica: coprono la
+ * stessa palette di COLORS più un paio di varianti aggiuntive, cosi' l'utente ha una scelta rapida
+ * senza dover aprire per forza il selettore colore nativo (che resta disponibile per un colore custom).
+ */
+export const ACCENT_PRESETS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#0ea5e9'];

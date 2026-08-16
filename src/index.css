@@ -5,6 +5,16 @@
   padding: 0;
 }
 
+/* I controlli di form (button/input/select/textarea) NON ereditano font-family dal contesto per
+   default nello stylesheet dei browser (usano un font di sistema, es. Arial) - a differenza di
+   <label>/<div>/<span>. Senza questa regola ogni bottone/campo dell'app renderizza in un font
+   diverso da Inter, con metriche diverse: due bottoni identici per stile ma uno <button> e uno
+   <label> (es. Esporta/Importa in Impostazioni) finiscono per avere dimensioni leggermente diverse
+   a parità di padding, perché il testo occupa uno spazio diverso. */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
 html, body {
   width: 100%;
   height: 100%;
@@ -35,6 +45,21 @@ html, body {
 input:focus-visible, select:focus-visible, textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35);
   border-color: #4f46e5;
+}
+
+/* --- BOTTONI: sfondo neutro ovunque, il colore passato a styles.btn(bg) si accende solo in
+   hover/focus (--btn-accento, impostata inline da styles.btn in App.jsx). Nessuna variante
+   "primaria" piena: stesso trattamento per ogni bottone dell'app, per scelta esplicita.
+   !important è necessario qui: border/color di styles.btn() arrivano come stile inline, che ha
+   sempre precedenza su una regola di un foglio di stile esterno (anche con :hover), quindi senza
+   !important questa regola non avrebbe mai effetto. */
+.arkiv-btn:hover:not(:disabled), .arkiv-btn:focus-visible:not(:disabled) {
+  border-color: var(--btn-accento) !important;
+  color: var(--btn-accento) !important;
+}
+.arkiv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- ANIMAZIONI --- */

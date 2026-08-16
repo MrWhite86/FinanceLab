@@ -699,7 +699,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 }
                 annullaModifica();
                 setSelectedLibraryTags([]);
-              }} style={{...styles.btn(config.coloreTema), width:'auto'}}>{recordInModifica ? 'SALVA MODIFICHE' : 'REGISTRA'}</button>
+              }} className="arkiv-btn" style={{...styles.btn(config.coloreTema), width:'auto'}}>{recordInModifica ? 'SALVA MODIFICHE' : 'REGISTRA'}</button>
             </div>
 
             {!showValoreSecondario ? (
@@ -813,7 +813,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <span style={{ fontSize: '13px', fontWeight: '700', color: config.coloreTema }}>
                   Associa {selectedLibraryTags.length} tag a {selectedRows.length} record selezionati
                 </span>
-                <button onClick={applyTagsToSelected} style={styles.btn(config.coloreTema)}>APPLICA ORA</button>
+                <button onClick={applyTagsToSelected} className="arkiv-btn" style={styles.btn(config.coloreTema)}>APPLICA ORA</button>
               </div>
             )}
           </div>

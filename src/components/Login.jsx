@@ -144,7 +144,7 @@ export default function Login({ onLogin, themeColor, coloreScuro, styles }) {
             <input type="checkbox" checked={rememberMe} onChange={() => {}} style={{ cursor: 'pointer' }} />
             <span style={{ fontSize: '13px', color: '#737373', fontWeight: '600' }}>Ricorda nome utente (la password va sempre reinserita)</span>
           </div>
-          <button onClick={handleAuth} style={{...styles.btn(themeColor), justifyContent: 'center', width: '100%', marginTop: '10px'}}>
+          <button onClick={handleAuth} className="arkiv-btn" style={{...styles.btn(themeColor), justifyContent: 'center', width: '100%', marginTop: '10px'}}>
             {authMode === 'login' ? 'ACCEDI AL PORTALE' : 'CREA PROFILO'}
           </button>
           <div style={{ marginTop: '10px', textAlign: 'center' }}>

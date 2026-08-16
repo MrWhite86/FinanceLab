@@ -70,12 +70,8 @@ export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onCon
         )}
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-          <button
-            style={{ padding: '10px 20px', background: styles.bgSottile2, color: styles.testoMuto, border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
-            onClick={onCancel}>ANNULLA</button>
-          <button
-            style={{ padding: '10px 20px', background: themeColor, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
-            onClick={() => onConfirm(inputValue)}>CONFERMA</button>
+          <button className="arkiv-btn" style={styles.btn(themeColor)} onClick={onCancel}>ANNULLA</button>
+          <button className="arkiv-btn" style={styles.btn(themeColor)} onClick={() => onConfirm(inputValue)}>CONFERMA</button>
         </div>
       </div>
     </div>

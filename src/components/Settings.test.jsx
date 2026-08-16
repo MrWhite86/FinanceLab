@@ -28,6 +28,7 @@ describe('SettingsView - Esporta', () => {
       />
     );
 
+    await userEvent.click(screen.getByText('Gestione Dati'));
     await userEvent.click(screen.getByText('Esporta'));
 
     expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
