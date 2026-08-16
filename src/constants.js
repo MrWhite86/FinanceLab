@@ -8,7 +8,9 @@ import { PAROLE_CHIAVE_IMPORTO_DEFAULT, PAROLE_CHIAVE_DATA_DEFAULT } from './ocr
  * sovrascritta dai dati salvati in localStorage per quello specifico utente).
  * - saldoStatoZero / dataStatoZero: il saldo di partenza da cui useFinance.js parte
  *   a sommare/sottrarre i movimenti per calcolare la liquidità attuale.
- * - coloreTema: colore principale dell'interfaccia (bottoni, grafici, header).
+ * - coloreTema: colore principale dell'interfaccia (bottoni, grafici, header). Anche le superfici
+ *   scure (barra laterale, login) lo seguono, scurito via scuraColore in colorUtils.js, invece di
+ *   avere un grigio fisso scollegato da ciò che l'utente ha scelto.
  * - percorsoSalvataggio: cartella di default per il backup locale (solo versione desktop Tauri).
  * - percorsoCattura: cartella opzionale (es. dentro iCloud Drive/Google Drive) sincronizzata
  *   col telefono, dove l'utente salva foto/scansioni da collegare poi a un record (vedi Importa.jsx).
@@ -34,7 +36,7 @@ export const INITIAL_CONFIG = {
   saldoStatoZero: 10000,
   dataStatoZero: '2024-01-01',
   coloreTema: '#4f46e5',
-  percorsoSalvataggio: '/Users/marcellobianco/Documents/FinanceLab_Data',
+  percorsoSalvataggio: '/Users/marcellobianco/Documents/Arkiv_Data',
   percorsoCattura: '',
   fileCatturaGestiti: [],
   backupLocale: { frequenza: 'nessuno', numeroBackup: 1, ultimoBackup: null },

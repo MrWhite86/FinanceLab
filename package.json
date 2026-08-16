@@ -1,6 +1,6 @@
 {
-  "name": "bilancio-personale",
-  "version": "0.1.29",
+  "name": "arkiv",
+  "version": "0.1.32",
   "private": true,
   "type": "module",
   "scripts": {

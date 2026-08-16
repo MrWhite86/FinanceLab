@@ -1,6 +1,6 @@
 // Motore OCR condiviso: legge il testo grezzo da un'immagine, senza sapere nulla di bollette,
 // scontrini o altro dominio applicativo (quella logica vive in interpretaBolletta.js e simili).
-// Pensato per essere riutilizzabile "a diversi livelli" dentro FinanceLab (e, in futuro, anche
+// Pensato per essere riutilizzabile "a diversi livelli" dentro Arkiv (e, in futuro, anche
 // fuori) senza essere legato a React o alle API di Tauri: riceve byte grezzi, restituisce testo.
 //
 // Gira interamente offline nel webview tramite tesseract.js (WASM): nessuna chiamata di rete,

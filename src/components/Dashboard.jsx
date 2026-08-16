@@ -26,18 +26,18 @@ const CustomChartTooltip = ({ active, payload, label }) => {
         padding: '14px 18px',
         borderRadius: '12px',
         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-        border: '1px solid #334155',
+        border: '1px solid #404040',
         fontSize: '13px',
         minWidth: '180px'
       }}>
-        <div style={{ fontWeight: '800', marginBottom: '8px', color: '#94a3b8', borderBottom: '1px solid #334155', paddingBottom: '6px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div style={{ fontWeight: '700', marginBottom: '8px', color: '#a3a3a3', borderBottom: '1px solid #404040', paddingBottom: '6px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           Mese di {label}
         </div>
         {payload.map((item, idx) => (
           <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', margin: '6px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, display: 'inline-block' }} />
-              <span style={{ fontWeight: '600', color: '#f8fafc' }}>{item.name}</span>
+              <span style={{ fontWeight: '600', color: '#fafafa' }}>{item.name}</span>
             </div>
             <span style={{ fontWeight: '800', color: '#fff' }}>
               € {Number(item.value).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
@@ -45,7 +45,7 @@ const CustomChartTooltip = ({ active, payload, label }) => {
           </div>
         ))}
         {payload.length > 1 && (
-          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #334155', display: 'flex', justifyContent: 'space-between', fontWeight: '900', color: '#60a5fa', fontSize: '12px' }}>
+          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #404040', display: 'flex', justifyContent: 'space-between', fontWeight: '700', color: '#60a5fa', fontSize: '12px' }}>
             <span>TOTALE MESE</span>
             <span>€ {total.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
           </div>
@@ -339,10 +339,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-        <h2 style={{ fontWeight: '900', fontSize: '26px' }}>Gestione {anno}</h2>
-        <div style={{ display: 'flex', background: '#e2e8f0', padding: '4px', borderRadius: '12px' }}>
-          <button onClick={() => setViewMode('dati')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'dati' ? '#fff' : 'transparent', color: viewMode === 'dati' ? config.coloreTema : '#64748b' }}>DATI</button>
-          <button onClick={() => setViewMode('grafici')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'grafici' ? '#fff' : 'transparent', color: viewMode === 'grafici' ? config.coloreTema : '#64748b' }}>ANALISI</button>
+        <h2 style={{ fontWeight: '800', fontSize: '26px' }}>Gestione {anno}</h2>
+        <div style={{ display: 'flex', background: '#e5e5e5', padding: '4px', borderRadius: '12px' }}>
+          <button onClick={() => setViewMode('dati')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'dati' ? '#fff' : 'transparent', color: viewMode === 'dati' ? config.coloreTema : '#737373' }}>DATI</button>
+          <button onClick={() => setViewMode('grafici')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'grafici' ? '#fff' : 'transparent', color: viewMode === 'grafici' ? config.coloreTema : '#737373' }}>ANALISI</button>
         </div>
       </div>
 
@@ -353,22 +353,22 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           <div style={styles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#1e293b' }}>Andamento Tag Personalizzati</h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona i tag per tracciarne e confrontarne l&rsquo;evoluzione mensile</span>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#262626' }}>Andamento Tag Personalizzati</h3>
+                <span style={{ fontSize: '12px', color: '#737373' }}>Seleziona i tag per tracciarne e confrontarne l&rsquo;evoluzione mensile</span>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 {/* Switch Tipo Grafico (Linee vs Barre) */}
-                <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', background: '#f5f5f5', padding: '3px', borderRadius: '10px', border: '1px solid #e5e5e5' }}>
                   <button 
                     onClick={() => setChartType('line')}
-                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', background: chartType === 'line' ? '#fff' : 'transparent', color: chartType === 'line' ? config.coloreTema : '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'line' ? '#fff' : 'transparent', color: chartType === 'line' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <TrendingUp size={14} /> Linee
                   </button>
                   <button 
                     onClick={() => setChartType('bar')}
-                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', background: chartType === 'bar' ? '#fff' : 'transparent', color: chartType === 'bar' ? config.coloreTema : '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'bar' ? '#fff' : 'transparent', color: chartType === 'bar' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <BarChart3 size={14} /> Barre
                   </button>
@@ -378,25 +378,25 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     onClick={() => selectTagsByType('uscita')}
-                    style={{ padding: '5px 10px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', color: '#ef4444' }}
+                    style={{ padding: '5px 10px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#ef4444' }}
                   >
                     Solo Uscite
                   </button>
                   <button 
                     onClick={() => selectTagsByType('entrata')}
-                    style={{ padding: '5px 10px', background: '#d1fae5', border: '1px solid #6ee7b7', borderRadius: '8px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', color: '#10b981' }}
+                    style={{ padding: '5px 10px', background: '#d1fae5', border: '1px solid #6ee7b7', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#10b981' }}
                   >
                     Solo Entrate
                   </button>
                   <button 
                     onClick={() => setSelectedTagsForAnalysis(allAvailableTagNames)}
-                    style={{ padding: '5px 10px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', color: '#475569' }}
+                    style={{ padding: '5px 10px', background: '#f5f5f5', border: '1px solid #d4d4d4', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#525252' }}
                   >
                     Tutti
                   </button>
                   <button 
                     onClick={() => setSelectedTagsForAnalysis([])}
-                    style={{ padding: '5px 10px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '10px', fontWeight: '800', cursor: 'pointer', color: '#475569' }}
+                    style={{ padding: '5px 10px', background: '#f5f5f5', border: '1px solid #d4d4d4', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#525252' }}
                   >
                     Nessuno
                   </button>
@@ -405,21 +405,21 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             </div>
 
             {/* Badge Interattivi dei Tag Raggruppati per Tipo */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '12px', border: '1px solid #f5f5f5' }}>
               {['uscita', 'entrata', 'neutro'].map(tipo => {
                 const tagsByTipo = config?.tags?.filter(t => t.tipo === tipo) || [];
                 if (tagsByTipo.length === 0) return null;
 
                 return (
                   <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '9px', fontWeight: '900', color: tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#64748b', width: '65px', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '9px', fontWeight: '700', color: tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373', width: '65px', textTransform: 'uppercase' }}>
                       {tipo}
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1 }}>
                       {tagsByTipo.map(t => {
                         const isSelected = selectedTagsForAnalysis.includes(t.nome);
                         const colorIndex = selectedTagsForAnalysis.indexOf(t.nome);
-                        const strokeColor = colorIndex !== -1 ? colors[colorIndex % colors.length] : (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#64748b');
+                        const strokeColor = colorIndex !== -1 ? colors[colorIndex % colors.length] : (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373');
 
                         return (
                           <div
@@ -429,15 +429,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                               padding: '5px 12px',
                               borderRadius: '8px',
                               fontSize: '11px',
-                              fontWeight: '800',
+                              fontWeight: '700',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '6px',
                               transition: 'all 0.2s',
                               background: isSelected ? strokeColor : '#ffffff',
-                              color: isSelected ? '#ffffff' : '#64748b',
-                              border: `2px solid ${isSelected ? strokeColor : '#e2e8f0'}`,
+                              color: isSelected ? '#ffffff' : '#737373',
+                              border: `2px solid ${isSelected ? strokeColor : '#e5e5e5'}`,
                               boxShadow: isSelected ? `0 2px 8px ${strokeColor}40` : 'none',
                               transform: isSelected ? 'scale(1.03)' : 'scale(1)'
                             }}
@@ -456,10 +456,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
             {/* Grafico (Linee o Barre) o Messaggio Stato Vuoto */}
             {selectedTagsForAnalysis.length === 0 ? (
-              <div style={{ padding: '50px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
-                <BarChart2 size={40} color="#94a3b8" style={{ marginBottom: '12px' }} />
-                <p style={{ margin: 0, fontWeight: '800', fontSize: '15px', color: '#1e293b' }}>Nessun tag selezionato</p>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Seleziona uno o più tag in alto per visualizzare l&rsquo;andamento nel grafico.</span>
+              <div style={{ padding: '50px 20px', textAlign: 'center', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4', color: '#737373' }}>
+                <BarChart2 size={40} color="#a3a3a3" style={{ marginBottom: '12px' }} />
+                <p style={{ margin: 0, fontWeight: '700', fontSize: '15px', color: '#262626' }}>Nessun tag selezionato</p>
+                <span style={{ fontSize: '12px', color: '#737373' }}>Seleziona uno o più tag in alto per visualizzare l&rsquo;andamento nel grafico.</span>
               </div>
             ) : (
               <>
@@ -467,9 +467,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   <ResponsiveContainer width="100%" height="100%">
                     {chartType === 'line' ? (
                       <LineChart data={datiAndamentoTag} margin={{ top: 15, right: 25, left: 15, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} fontWeight={600} />
-                        <YAxis stroke="#64748b" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                        <XAxis dataKey="name" stroke="#737373" fontSize={12} fontWeight={600} />
+                        <YAxis stroke="#737373" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
                         <Tooltip content={<CustomChartTooltip />} />
                         <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', fontWeight: '700' }} />
                         {selectedTagsForAnalysis.map((tag, idx) => (
@@ -487,9 +487,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       </LineChart>
                     ) : (
                       <BarChart data={datiAndamentoTag} margin={{ top: 15, right: 25, left: 15, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} fontWeight={600} />
-                        <YAxis stroke="#64748b" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                        <XAxis dataKey="name" stroke="#737373" fontSize={12} fontWeight={600} />
+                        <YAxis stroke="#737373" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
                         <Tooltip content={<CustomChartTooltip />} />
                         <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px', fontWeight: '700' }} />
                         {selectedTagsForAnalysis.map((tag, idx) => (
@@ -513,7 +513,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       key={item.nome}
                       style={{ 
                         padding: '14px 18px', 
-                        background: '#f8fafc', 
+                        background: '#fafafa', 
                         borderRadius: '12px', 
                         borderLeft: `5px solid ${colors[idx % colors.length]}`,
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -521,15 +521,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b' }}>{item.nome.toUpperCase()}</span>
-                        <span style={{ fontSize: '9px', fontWeight: '900', padding: '2px 6px', borderRadius: '4px', background: item.tipo === 'entrata' ? '#d1fae5' : item.tipo === 'uscita' ? '#fee2e2' : '#e2e8f0', color: item.tipo === 'entrata' ? '#10b981' : item.tipo === 'uscita' ? '#ef4444' : '#64748b' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>{item.nome.toUpperCase()}</span>
+                        <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: item.tipo === 'entrata' ? '#d1fae5' : item.tipo === 'uscita' ? '#fee2e2' : '#e5e5e5', color: item.tipo === 'entrata' ? '#10b981' : item.tipo === 'uscita' ? '#ef4444' : '#737373' }}>
                           {item.tipo.toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: '6px 0' }}>
+                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#262626', margin: '6px 0' }}>
                         € {item.totale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </div>
-                      <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
+                      <span style={{ fontSize: '11px', color: '#a3a3a3', fontWeight: '600' }}>
                         Media: € {item.mediaMensile.toLocaleString('it-IT', { minimumFractionDigits: 2 })}/mese
                       </span>
                     </div>
@@ -544,15 +544,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {/* Card Patrimonio Netto */}
             <div style={{ ...styles.card, height: '400px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '15px' }}>
-                <h4 style={{ margin: 0, fontWeight: '800', fontSize: '16px', color: '#1e293b' }}>Patrimonio Netto Mensile</h4>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Evoluzione cumulativa della liquidità nel corso del {anno}</span>
+                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626' }}>Patrimonio Netto Mensile</h4>
+                <span style={{ fontSize: '12px', color: '#737373' }}>Evoluzione cumulativa della liquidità nel corso del {anno}</span>
               </div>
               <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={datiGrafici.patrimonio} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
-                    <XAxis dataKey="name" fontSize={11} stroke="#64748b" fontWeight={600} />
-                    <YAxis fontSize={11} stroke="#64748b" fontWeight={600} tickFormatter={formatYAxis} width={60} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5"/>
+                    <XAxis dataKey="name" fontSize={11} stroke="#737373" fontWeight={600} />
+                    <YAxis fontSize={11} stroke="#737373" fontWeight={600} tickFormatter={formatYAxis} width={60} />
                     <Tooltip content={<CustomChartTooltip />} />
                     <Area type="monotone" dataKey="Valore" name="Patrimonio" stroke={config.coloreTema} fill={config.coloreTema} fillOpacity={0.15} strokeWidth={3} />
                   </AreaChart>
@@ -564,11 +564,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             <div style={{ ...styles.card, height: '400px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontWeight: '800', fontSize: '16px', color: '#1e293b' }}>Ripartizione Uscite per Tag</h4>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Suddivisione percentuale delle spese dell&rsquo;anno</span>
+                  <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626' }}>Ripartizione Uscite per Tag</h4>
+                  <span style={{ fontSize: '12px', color: '#737373' }}>Suddivisione percentuale delle spese dell&rsquo;anno</span>
                 </div>
                 {totaleUsciteAnno > 0 && (
-                  <span style={{ fontSize: '12px', fontWeight: '800', padding: '4px 10px', background: '#fee2e2', color: '#ef4444', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', padding: '4px 10px', background: '#fee2e2', color: '#ef4444', borderRadius: '8px' }}>
                     Tot: € {totaleUsciteAnno.toLocaleString('it-IT', { minimumFractionDigits: 0 })}
                   </span>
                 )}
@@ -599,7 +599,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#a3a3a3' }}>
                   <PieChartIcon size={40} style={{ marginBottom: '10px' }} />
                   <span style={{ fontSize: '13px', fontWeight: '600' }}>Nessuna spesa registrata per il {anno}</span>
                 </div>
@@ -611,10 +611,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           {riassuntoValoriSecondari.length > 0 && (
             <div style={styles.card}>
               <div style={{ marginBottom: '15px' }}>
-                <h4 style={{ margin: 0, fontWeight: '800', fontSize: '16px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Calculator size={16} color={config.coloreTema} /> Valori Secondari
                 </h4>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Totale e media dei valori secondari registrati nel {anno}, raggruppati per etichetta</span>
+                <span style={{ fontSize: '12px', color: '#737373' }}>Totale e media dei valori secondari registrati nel {anno}, raggruppati per etichetta</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '14px' }}>
                 {riassuntoValoriSecondari.map((item, idx) => (
@@ -622,7 +622,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     key={item.etichetta}
                     style={{
                       padding: '14px 18px',
-                      background: '#f8fafc',
+                      background: '#fafafa',
                       borderRadius: '12px',
                       borderLeft: `5px solid ${colors[idx % colors.length]}`,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -630,15 +630,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b' }}>{item.etichetta.toUpperCase()}</span>
-                      <span style={{ fontSize: '9px', fontWeight: '900', padding: '2px 6px', borderRadius: '4px', background: '#e2e8f0', color: '#64748b' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>{item.etichetta.toUpperCase()}</span>
+                      <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: '#e5e5e5', color: '#737373' }}>
                         {item.conteggio} {item.conteggio === 1 ? 'RECORD' : 'RECORDS'}
                       </span>
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: '6px 0' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '900', color: '#262626', margin: '6px 0' }}>
                       € {item.totale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </div>
-                    <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
+                    <span style={{ fontSize: '11px', color: '#a3a3a3', fontWeight: '600' }}>
                       Media: € {item.media.toLocaleString('it-IT', { minimumFractionDigits: 2 })}/record
                     </span>
                   </div>
@@ -653,10 +653,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           <div style={styles.card} ref={formCardRef}>
             {recordInModifica && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', marginBottom: '15px', background: `${config.coloreTema}10`, border: `1px solid ${config.coloreTema}`, borderRadius: '10px' }}>
-                <span style={{ fontSize: '12px', fontWeight: '800', color: config.coloreTema, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: config.coloreTema, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Pencil size={13} /> Stai modificando: {nuovaSpesa.nota || '...'}
                 </span>
-                <button onClick={annullaModifica} style={{ background: 'transparent', border: 'none', color: config.coloreTema, fontSize: '11px', fontWeight: '800', cursor: 'pointer', textDecoration: 'underline' }}>
+                <button onClick={annullaModifica} style={{ background: 'transparent', border: 'none', color: config.coloreTema, fontSize: '11px', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}>
                   ANNULLA MODIFICA
                 </button>
               </div>
@@ -705,12 +705,12 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {!showValoreSecondario ? (
               <button
                 onClick={() => setShowValoreSecondario(true)}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
+                style={{ background: 'transparent', border: 'none', color: '#737373', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
               >
                 <Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
                 <div>
                   <label style={styles.label}>VALORE SECONDARIO (€)</label>
                   <input type="number" value={nuovaSpesa.valoreSecondario} onChange={e => setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: e.target.value })} style={styles.input} placeholder="0.00" />
@@ -721,7 +721,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 </div>
                 <X
                   size={18}
-                  color="#94a3b8"
+                  color="#a3a3a3"
                   style={{ cursor: 'pointer', marginBottom: '12px' }}
                   onClick={() => { setShowValoreSecondario(false); setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: '', etichettaSecondaria: '' }); }}
                 />
@@ -731,19 +731,19 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {!showScadenza ? (
               <button
                 onClick={() => setShowScadenza(true)}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
+                style={{ background: 'transparent', border: 'none', color: '#737373', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
               >
                 <Plus size={12} /> AGGIUNGI SCADENZA (es. garanzia, dichiarazione redditi)
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
                 <div>
                   <label style={styles.label}>SCADE IL</label>
                   <input type="date" value={nuovaSpesa.scadenza} onChange={e => setNuovaSpesa({ ...nuovaSpesa, scadenza: e.target.value })} style={styles.input} />
                 </div>
                 <X
                   size={18}
-                  color="#94a3b8"
+                  color="#a3a3a3"
                   style={{ cursor: 'pointer', marginBottom: '12px' }}
                   onClick={() => { setShowScadenza(false); setNuovaSpesa({ ...nuovaSpesa, scadenza: '' }); }}
                 />
@@ -753,19 +753,19 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {!showPagato ? (
               <button
                 onClick={() => setShowPagato(true)}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
+                style={{ background: 'transparent', border: 'none', color: '#737373', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: 0, marginBottom: '15px' }}
               >
                 <Plus size={12} /> TRACCIA STATO PAGAMENTO (es. multe, bollette)
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setNuovaSpesa({ ...nuovaSpesa, pagato: !nuovaSpesa.pagato })}>
                   <input type="checkbox" checked={nuovaSpesa.pagato} onChange={() => {}} style={{ cursor: 'pointer' }} />
-                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>{nuovaSpesa.pagato ? 'Pagato' : 'Da pagare'}</span>
+                  <span style={{ fontSize: '13px', color: '#737373', fontWeight: '700' }}>{nuovaSpesa.pagato ? 'Pagato' : 'Da pagare'}</span>
                 </div>
                 <X
                   size={18}
-                  color="#94a3b8"
+                  color="#a3a3a3"
                   style={{ cursor: 'pointer', marginLeft: 'auto' }}
                   onClick={() => { setShowPagato(false); setNuovaSpesa({ ...nuovaSpesa, pagato: false }); }}
                 />
@@ -776,7 +776,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
               <span style={styles.label}>SELEZIONA TAG:</span>
               {['entrata', 'uscita', 'neutro'].map(tipo => (
                 <div key={tipo} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', width: '60px' }}>{tipo.toUpperCase()}</span>
+                  <span style={{ fontSize: '9px', fontWeight: '700', color: '#a3a3a3', width: '60px' }}>{tipo.toUpperCase()}</span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {config?.tags?.filter(t => t.tipo === tipo).map(t => (
                       <div 
@@ -785,12 +785,12 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                         style={{ 
                           padding: '4px 10px', 
                           borderRadius: '8px', 
-                          border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e2e8f0', 
+                          border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e5e5e5', 
                           fontSize: '10px', 
                           fontWeight: '700', 
                           cursor: 'pointer', 
-                          background: nuovaSpesa.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#64748b') : '#fff', 
-                          color: nuovaSpesa.tags.includes(t.nome) ? '#fff' : '#64748b',
+                          background: nuovaSpesa.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373') : '#fff', 
+                          color: nuovaSpesa.tags.includes(t.nome) ? '#fff' : '#737373',
                           transition: 'all 0.2s',
                           display: 'flex',
                           alignItems: 'center',
@@ -829,7 +829,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           */}
           <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: '#f8fafc' }}>
+              <thead style={{ background: '#fafafa' }}>
                 <tr>
                   <th style={styles.th('40px')}><input type="checkbox" checked={topLevelSpese.length > 0 && selectedRows.length === topLevelSpese.length} onChange={(e) => setSelectedRows(e.target.checked ? topLevelSpese.map(s => s.id) : [])} /></th>
                   <th style={styles.th('12%')}>Data</th>
@@ -852,7 +852,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
                     const isUscita = tagInfos.some(t => t.tipo === 'uscita');
                     const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
-                    const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#1e293b');
+                    const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#262626');
                     // riga.pagato è tracciato solo se l'utente ha usato "TRACCIA STATO PAGAMENTO" in creazione: undefined = non applicabile
                     const statoPagamentoTracciato = riga.pagato !== undefined;
                     const daPagare = riga.pagato === false;
@@ -866,10 +866,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
                     return (
                       <tr key={riga.id}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : '#f8fafc'}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : '#fafafa'}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : 'transparent'}
                           style={{
-                            borderBottom: '1px solid #f1f5f9',
+                            borderBottom: '1px solid #f5f5f5',
                             borderLeft: daPagare ? '4px solid #f59e0b' : '4px solid transparent',
                             transition: 'all 0.2s',
                             backgroundColor: daPagare ? '#fffbeb' : (isNeutro ? '#fcfcfc' : 'transparent'),
@@ -884,32 +884,32 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             <span key={t}
                               onClick={() => onUpdateSpesa(riga.id, { tags: riga.tags.filter(tag => tag !== t) })}
                               title="Clicca per rimuovere questo tag"
-                              style={{ padding: '4px 8px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10px', fontWeight: '800', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
+                              style={{ padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }}>
+                              onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f5'; e.currentTarget.style.color = '#737373'; }}>
                               {t.toUpperCase()}
                               <X size={10} />
                             </span>
                           ))}
                           {isFiglio && (!riga.tags || riga.tags.length === 0) && (
-                            <span style={{ fontSize: '10px', color: '#cbd5e1', fontStyle: 'italic' }}>Nessun tag</span>
+                            <span style={{ fontSize: '10px', color: '#d4d4d4', fontStyle: 'italic' }}>Nessun tag</span>
                           )}
                         </td>
                         <td style={{ padding: '16px 20px' }}>
                           <div style={{fontWeight: isFiglio ? 500 : 600, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap'}}>
                             {haDettagliExtra && (
                               espansa
-                                ? <ChevronDown size={13} color="#94a3b8" style={{ cursor: 'pointer', flexShrink: 0 }} title="Comprimi dettagli" onClick={() => toggleEspansione(riga.id)} />
-                                : <ChevronRight size={13} color="#94a3b8" style={{ cursor: 'pointer', flexShrink: 0 }} title="Espandi dettagli" onClick={() => toggleEspansione(riga.id)} />
+                                ? <ChevronDown size={13} color="#a3a3a3" style={{ cursor: 'pointer', flexShrink: 0 }} title="Comprimi dettagli" onClick={() => toggleEspansione(riga.id)} />
+                                : <ChevronRight size={13} color="#a3a3a3" style={{ cursor: 'pointer', flexShrink: 0 }} title="Espandi dettagli" onClick={() => toggleEspansione(riga.id)} />
                             )}
-                            {isFiglio && <span style={{ color: '#cbd5e1' }}>↳</span>}
+                            {isFiglio && <span style={{ color: '#d4d4d4' }}>↳</span>}
                             {riga.nota}
                             {statoPagamentoTracciato && (
                               <span
                                 onClick={() => onUpdateSpesa(riga.id, { pagato: !riga.pagato })}
                                 title="Clicca per cambiare stato"
                                 style={{
-                                  fontSize: '9px', fontWeight: '900', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer',
+                                  fontSize: '9px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer',
                                   background: daPagare ? '#fef3c7' : '#d1fae5', color: daPagare ? '#b45309' : '#10b981'
                                 }}
                               >
@@ -922,17 +922,17 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                           {haDettagliExtra && !espansa && (
                             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '3px' }}>
                               {allegati.length > 0 && (
-                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <span style={{ fontSize: '10px', fontWeight: '700', color: '#a3a3a3', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                   <Paperclip size={10} /> {allegati.length}
                                 </span>
                               )}
                               {riga.valoreSecondario != null && (
-                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8' }}>
+                                <span style={{ fontSize: '10px', fontWeight: '700', color: '#a3a3a3' }}>
                                   {(riga.etichettaSecondaria || 'Secondario')}: € {Number(riga.valoreSecondario).toLocaleString('it-IT')}
                                 </span>
                               )}
                               {riga.scadenza && (
-                                <span style={{ fontSize: '10px', fontWeight: '800', color: scadenzaPassata ? '#ef4444' : '#b45309' }}>
+                                <span style={{ fontSize: '10px', fontWeight: '700', color: scadenzaPassata ? '#ef4444' : '#b45309' }}>
                                   Scade {formatDataIT(riga.scadenza)}{scadenzaPassata && ' — scaduta!'}
                                 </span>
                               )}
@@ -941,7 +941,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
                           {/* Dettagli per esteso, solo quando la riga è espansa dal chevron qui sopra */}
                           {espansa && allegati.map(nomeFile => (
-                            <div key={nomeFile} style={{fontSize:'10px', color:'#94a3b8', display:'flex', alignItems:'center', gap:'4px', marginTop:'2px'}} title={`${config.percorsoSalvataggio}/backup/${anno}/${nomeFile}`}>
+                            <div key={nomeFile} style={{fontSize:'10px', color:'#a3a3a3', display:'flex', alignItems:'center', gap:'4px', marginTop:'2px'}} title={`${config.percorsoSalvataggio}/backup/${anno}/${nomeFile}`}>
                               <FileText size={10}/> {nomeFile}
                               <Eye
                                 size={11}
@@ -958,7 +958,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             </div>
                           ))}
                           {espansa && riga.valoreSecondario != null && (
-                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
+                            <div style={{ fontSize: '10px', color: '#a3a3a3', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                               {(riga.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(riga.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                             </div>
                           )}
@@ -968,7 +968,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             </div>
                           )}
                           {!isFiglio && haFigli && (
-                            <div style={{ fontSize: '10px', fontWeight: '700', marginTop: '2px', color: superaTotale ? '#ef4444' : '#64748b' }}>
+                            <div style={{ fontSize: '10px', fontWeight: '700', marginTop: '2px', color: superaTotale ? '#ef4444' : '#737373' }}>
                               € {categorizzato.toLocaleString('it-IT', { minimumFractionDigits: 2 })} categorizzati su € {Number(riga.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                               {superaTotale && ' — supera il totale!'}
                             </div>
@@ -980,7 +980,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             {/* Modifica: riapre il form (principale per una voce madre, inline per una sottovoce) precompilato, per correggere un record senza doverlo ricreare. */}
                             <Pencil
                               size={15}
-                              color="#94a3b8"
+                              color="#a3a3a3"
                               style={{ cursor: 'pointer' }}
                               title="Modifica"
                               onClick={() => isFiglio ? iniziaModificaSottovoce(riga, mov.id) : iniziaModifica(riga)}
@@ -988,7 +988,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             {/* Allega file: copia i file scelti in percorsoSalvataggio/backup/<anno del record>/ (solo versione Desktop). Si può cliccare più volte per accumulare altri allegati. */}
                             <Paperclip
                               size={15}
-                              color={allegati.length > 0 ? '#10b981' : '#94a3b8'}
+                              color={allegati.length > 0 ? '#10b981' : '#a3a3a3'}
                               style={{ cursor: 'pointer' }}
                               title={allegati.length > 0 ? `${allegati.length} allegato/i (clicca per aggiungerne altri)` : 'Allega uno o più file'}
                               onClick={() => onAllegaFile(riga)}
@@ -997,7 +997,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                               <ListPlus size={15} color={config.coloreTema} style={{ cursor: 'pointer' }} title="Aggiungi una sottovoce" onClick={() => apriFormSottovoce(riga)} />
                             )}
                             {/* Cancellazione bloccata su una voce madre finché ha sottovoci: eviterebbe riferimenti orfani (contenitoreId che punta a un id non più esistente) */}
-                            <Trash2 size={15} color="#cbd5e1" style={{ cursor: 'pointer' }} onClick={() => {
+                            <Trash2 size={15} color="#d4d4d4" style={{ cursor: 'pointer' }} onClick={() => {
                               if (!isFiglio && haFigli) return showToast("Questa voce ha sottovoci collegate: rimuovile prima di eliminarla.");
                               onRemoveSpesa(riga.id);
                             }} />
@@ -1017,11 +1017,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       {rigaApertaPerSottovoce === mov.id && (
                         // Mini-form inline sottovoce: aperto dal pulsante "+" (nuova) su questa riga madre,
                         // oppure dalla matita di una sottovoce esistente (sottovoceInModifica valorizzato)
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                        <tr style={{ background: '#fafafa', borderBottom: '1px solid #f5f5f5' }}>
                           <td></td>
                           <td colSpan={5} style={{ padding: '14px 20px 18px 40px' }}>
                             {sottovoceInModifica && (
-                              <div style={{ fontSize: '11px', fontWeight: '800', color: config.coloreTema, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: '700', color: config.coloreTema, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                                 <Pencil size={12} /> Modifica sottovoce
                               </div>
                             )}
@@ -1039,16 +1039,16 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                                 <input type="text" value={nuovaSottovoce.nota} onChange={e => setNuovaSottovoce({ ...nuovaSottovoce, nota: e.target.value })} style={styles.input} placeholder="Descrizione della sottovoce..." />
                               </div>
                               <Check size={18} color="#10b981" style={{ cursor: 'pointer', marginBottom: '12px' }} title="Salva la sottovoce" onClick={() => registraSottovoce(mov.id)} />
-                              <X size={18} color="#94a3b8" style={{ cursor: 'pointer', marginBottom: '12px' }} title="Annulla" onClick={chiudiFormSottovoce} />
+                              <X size={18} color="#a3a3a3" style={{ cursor: 'pointer', marginBottom: '12px' }} title="Annulla" onClick={chiudiFormSottovoce} />
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
                               {(config?.tags || []).map(t => (
                                 <div key={t.nome} onClick={() => toggleSottovoceTag(t.nome)}
                                   style={{
                                     padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer',
-                                    background: nuovaSottovoce.tags.includes(t.nome) ? (t.tipo === 'entrata' ? '#10b981' : t.tipo === 'uscita' ? '#ef4444' : '#64748b') : '#fff',
-                                    color: nuovaSottovoce.tags.includes(t.nome) ? '#fff' : '#64748b',
-                                    border: '1px solid #e2e8f0'
+                                    background: nuovaSottovoce.tags.includes(t.nome) ? (t.tipo === 'entrata' ? '#10b981' : t.tipo === 'uscita' ? '#ef4444' : '#737373') : '#fff',
+                                    color: nuovaSottovoce.tags.includes(t.nome) ? '#fff' : '#737373',
+                                    border: '1px solid #e5e5e5'
                                   }}>
                                   {t.nome.toUpperCase()}
                                 </div>

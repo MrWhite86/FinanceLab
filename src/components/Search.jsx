@@ -38,9 +38,9 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ ...styles.card, marginBottom: 0 }}>
-        <h2 style={{ fontWeight: '900', fontSize: '26px', marginBottom: '20px' }}>Ricerca nell&rsquo;Archivio</h2>
+        <h2 style={{ fontWeight: '800', fontSize: '26px', marginBottom: '20px' }}>Ricerca nell&rsquo;Archivio</h2>
         <div style={{ position: 'relative' }}>
-          <Search size={20} style={{ position: 'absolute', left: '15px', top: '15px', color: '#94a3b8' }} />
+          <Search size={20} style={{ position: 'absolute', left: '15px', top: '15px', color: '#a3a3a3' }} />
           <input 
             type="text" 
             placeholder="Cerca per nota, categoria o data (es: 2024)..." 
@@ -52,7 +52,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
             <X 
               size={20} 
               onClick={() => setSearchTerm('')} 
-              style={{ position: 'absolute', right: '15px', top: '15px', color: '#94a3b8', cursor: 'pointer' }} 
+              style={{ position: 'absolute', right: '15px', top: '15px', color: '#a3a3a3', cursor: 'pointer' }} 
             />
           )}
         </div>
@@ -63,14 +63,14 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
           <span style={{ ...styles.label, fontSize: '10px' }}>LIBRERIA TAG (Seleziona uno o più tag da associare):</span>
           {['entrata', 'uscita', 'neutro'].map(tipo => (
             <div key={tipo} style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', fontWeight: '900', color: '#94a3b8', width: '50px' }}>{tipo.toUpperCase()}</span>
+              <span style={{ fontSize: '8px', fontWeight: '700', color: '#a3a3a3', width: '50px' }}>{tipo.toUpperCase()}</span>
               {config?.tags?.filter(t => t.tipo === tipo).map(t => (
                 <div 
                   key={t.nome} 
                   onClick={() => setSelectedLibraryTags(prev => prev.includes(t.nome) ? prev.filter(tag => tag !== t.nome) : [...prev, t.nome])}
                   style={{ 
                     padding: '4px 10px', background: '#fff', 
-                    border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e2e8f0', 
+                    border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e5e5e5', 
                     borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: config.coloreTema, 
                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
                     boxShadow: selectedLibraryTags.includes(t.nome) ? `0 0 8px ${config.coloreTema}40` : 'none'
@@ -96,7 +96,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
 
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f8fafc' }}>
+          <thead style={{ background: '#fafafa' }}>
             <tr>
               <th style={styles.th('40px')}><input type="checkbox" checked={selectedRows.length === speseFiltrate.length && speseFiltrate.length > 0} onChange={(e) => setSelectedRows(e.target.checked ? speseFiltrate.map(s => s.id) : [])} /></th>
               <th style={styles.th('12%')}>Data</th><th style={styles.th('23%')}>Tag</th><th style={styles.th('40%')}>Dettagli</th><th style={styles.th('20%', 'right')}>Importo</th></tr>
@@ -107,14 +107,14 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
               const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
               const isUscita = tagInfos.some(t => t.tipo === 'uscita');
               const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
-              const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#1e293b');
+              const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#262626');
               // Supporta anche il vecchio campo singolare "allegato" delle versioni precedenti dell'app
               const allegati = mov.allegati || (mov.allegato ? [mov.allegato] : []);
 
               return (
                 <tr key={mov.id} 
                     style={{ 
-                      borderBottom: '1px solid #f1f5f9', 
+                      borderBottom: '1px solid #f5f5f5', 
                       background: isNeutro ? '#fcfcfc' : 'white',
                       boxShadow: animatedRowId === mov.id ? `0 0 0 3px ${config.coloreTema}80` : 'none',
                       transition: 'all 0.2s'
@@ -125,7 +125,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   <td style={{ padding: '16px 20px', fontSize:'13px' }}>{new Intl.DateTimeFormat('it-IT').format(new Date(mov.data))}</td>
                   <td style={{ padding: '16px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {mov.tags?.map(t => (
-                      <span key={t} style={{ padding: '4px 8px', background: '#f1f5f9', borderRadius: '6px', fontSize: '10px', fontWeight: '800', color: '#64748b' }}>
+                      <span key={t} style={{ padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373' }}>
                         {t.toUpperCase()}
                       </span>
                     ))}
@@ -133,13 +133,13 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   <td style={{ padding: '16px 20px', fontSize:'14px' }}>
                     <div style={{fontWeight:600}}>{mov.nota}</div>
                     {allegati.map(nomeFile => (
-                      <div key={nomeFile} style={{fontSize:'10px', color:'#94a3b8', display:'flex', alignItems:'center', gap:'4px', marginTop:'2px'}} title={`${config.percorsoSalvataggio}/backup/${mov.data.substring(0,4)}/${nomeFile}`}>
+                      <div key={nomeFile} style={{fontSize:'10px', color:'#a3a3a3', display:'flex', alignItems:'center', gap:'4px', marginTop:'2px'}} title={`${config.percorsoSalvataggio}/backup/${mov.data.substring(0,4)}/${nomeFile}`}>
                         <FileText size={10}/> {nomeFile}
                         <Eye size={11} style={{ cursor: 'pointer' }} title="Apri l'anteprima" onClick={() => onApriAnteprima(mov, nomeFile)} />
                       </div>
                     ))}
                     {mov.valoreSecondario != null && (
-                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
+                      <div style={{ fontSize: '10px', color: '#a3a3a3', fontWeight: '700', marginTop: '2px' }} title="Valore informativo, non incluso in saldo e grafici">
                         {(mov.etichettaSecondaria || 'Secondario').toUpperCase()}: € {Number(mov.valoreSecondario).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </div>
                     )}

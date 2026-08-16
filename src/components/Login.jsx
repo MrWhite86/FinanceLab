@@ -4,10 +4,11 @@
 // dispositivo/browser: account e dati non si sincronizzano automaticamente tra Mac e telefono).
 // L'hashing vero e proprio (PBKDF2 + salt) è delegato ad authUtils.js.
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, User, CheckCircle2 } from 'lucide-react';
+import { User, CheckCircle2 } from 'lucide-react';
 import { derivePasswordRecord, verifyPassword, isLegacyRecord } from '../authUtils';
+import ArkivMark from './ArkivMark';
 
-export default function Login({ onLogin, themeColor, styles }) {
+export default function Login({ onLogin, themeColor, coloreScuro, styles }) {
   /** Mappa username -> record password ({hash, salt}, o stringa legacy da migrare), caricata da localStorage. */
   const [users, setUsers] = useState({});
 
@@ -91,19 +92,19 @@ export default function Login({ onLogin, themeColor, styles }) {
   return (
     <div style={{ 
       display: 'flex', minHeight: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', 
-      backgroundColor: '#0f172a',
-      backgroundImage: `radial-gradient(circle at top right, ${themeColor}33, transparent), radial-gradient(circle at bottom left, #1e1b4b, transparent)`
+      backgroundColor: coloreScuro,
+      backgroundImage: `radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent), radial-gradient(circle at bottom left, rgba(0,0,0,0.35), transparent)`
     }}>
       <div style={{ ...styles.card, width: '90%', maxWidth: '440px', padding: '40px', textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
-          <div style={{ background: `${themeColor}15`, padding: '15px', borderRadius: '20px' }}>
-            <LayoutDashboard color={themeColor} size={48} />
+          <div style={{ background: coloreScuro, padding: '18px', borderRadius: '20px' }}>
+            <ArkivMark size={40} />
           </div>
         </div>
-        <h2 style={{ marginBottom: '8px', fontSize: '26px', fontWeight: '900', color: '#1e293b' }}>
+        <h2 style={{ marginBottom: '8px', fontSize: '26px', fontWeight: '800', color: '#262626' }}>
           {authMode === 'login' ? 'Bentornato' : 'Nuovo Profilo'}
         </h2>
-        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
+        <p style={{ color: '#737373', fontSize: '14px', marginBottom: '32px' }}>
           {authMode === 'login' ? 'Inserisci le tue credenziali per accedere' : 'Crea un account locale per i tuoi dati'}
         </p>
         
@@ -115,10 +116,10 @@ export default function Login({ onLogin, themeColor, styles }) {
                 <div 
                   key={name} 
                   onClick={() => handleSelectProfile(name)}
-                  style={{ padding: '8px 12px', background: credentials.username === name ? `${themeColor}20` : '#f1f5f9', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${credentials.username === name ? themeColor : '#e2e8f0'}`, display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
+                  style={{ padding: '8px 12px', background: credentials.username === name ? `${themeColor}20` : '#f5f5f5', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${credentials.username === name ? themeColor : '#e5e5e5'}`, display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
                 >
-                  <User size={14} color={credentials.username === name ? themeColor : '#64748b'} />
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b' }}>{name}</span>
+                  <User size={14} color={credentials.username === name ? themeColor : '#737373'} />
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#262626' }}>{name}</span>
                   {remembered[name] && <CheckCircle2 size={12} color="#10b981" />}
                 </div>
               ))}
@@ -143,13 +144,13 @@ export default function Login({ onLogin, themeColor, styles }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setRememberMe(!rememberMe)}>
             <input type="checkbox" checked={rememberMe} onChange={() => {}} style={{ cursor: 'pointer' }} />
-            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Ricorda nome utente (la password va sempre reinserita)</span>
+            <span style={{ fontSize: '13px', color: '#737373', fontWeight: '600' }}>Ricorda nome utente (la password va sempre reinserita)</span>
           </div>
           <button onClick={handleAuth} style={{...styles.btn(themeColor), justifyContent: 'center', width: '100%', marginTop: '10px'}}>
             {authMode === 'login' ? 'ACCEDI AL PORTALE' : 'CREA PROFILO'}
           </button>
           <div style={{ marginTop: '10px', textAlign: 'center' }}>
-            <p style={{ fontSize: '13px', color: '#64748b' }}>
+            <p style={{ fontSize: '13px', color: '#737373' }}>
               {authMode === 'login' ? "Prima volta qui?" : "Hai già un account?"} {' '}
               <span style={{ color: themeColor, fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }} 
                 onClick={() => setAuthMode(authMode === 'login' ? 'registro' : 'login')}>

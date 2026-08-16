@@ -1,5 +1,5 @@
 /**
- * FinanceLab - Componente Root (v0.1.29)
+ * Arkiv - Componente Root
  *
  * È il "centro di controllo" dell'app: tiene in memoria tutto lo stato condiviso
  * (utente loggato, configurazione, elenco movimenti) e lo passa in giù ai componenti
@@ -27,6 +27,7 @@ import { INITIAL_CONFIG, COLORS } from './constants';
 import { parseImportedData } from './importUtils';
 import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
 import { nomeCartellaBackup, cartelleDaRimuovere, backupDaEseguireAllAvvio } from './backupUtils';
+import { scuraColore } from './colorUtils';
 // I moduli OCR (tesseract.js/pdfjs-dist, pesanti) si caricano solo quando servono davvero (import
 // dinamico dentro estraiDatiOcr/impareOcrFornitore), non ad ogni avvio dell'app: stesso principio
 // già usato per Dashboard.jsx (lazy) con recharts, per non appesantire il caricamento iniziale
@@ -648,39 +649,42 @@ export default function App() {
   // Stili condivisi (l'app non usa CSS Modules/Tailwind: gli stili sono oggetti JS passati
   // via prop "styles" a tutti i componenti figli, cosi' l'aspetto resta coerente in tutta l'app).
   const s = useMemo(() => ({
-    card: { background: '#ffffff', borderRadius: '16px', padding: '20px', border: '1px solid #e2e8f0', marginBottom: '20px' },
-    input: { padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
-    label: { fontSize: '11px', fontWeight: '800', color: '#94a3b8', marginBottom: '6px', display: 'block' },
+    card: { background: '#ffffff', borderRadius: '16px', padding: '20px', border: '1px solid #e5e5e5', marginBottom: '20px' },
+    input: { padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d4', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
+    label: { fontSize: '11px', fontWeight: '700', color: '#a3a3a3', marginBottom: '6px', display: 'block' },
     btn: (bg) => ({ padding: '12px 16px', background: bg, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }),
-    th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#64748b', fontSize: '11px', fontWeight: '800', borderBottom: '2px solid #f1f5f9' }),
+    th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#737373', fontSize: '11px', fontWeight: '700', borderBottom: '2px solid #f5f5f5' }),
   }), []);
+
+  /** Variante scura del colore tema, per le superfici sempre scure (barra laterale, login): cosi' seguono la personalizzazione dell'utente invece di restare un grigio fisso scollegato. */
+  const coloreScuro = useMemo(() => scuraColore(config.coloreTema, 0.85), [config.coloreTema]);
 
   // Senza utente loggato: solo la schermata di login, a schermo intero.
   // Con utente loggato: layout con Sidebar fissa + area principale, dove viene mostrata
   // UNA sola vista alla volta in base ad activeTab (Ricerca / Impostazioni / Dashboard di un anno).
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: '#f8fafc', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: '#fafafa', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
       {!currentUser ? (
-        <LoginView onLogin={setCurrentUser} themeColor={config.coloreTema} styles={s} />
+        <LoginView onLogin={setCurrentUser} themeColor={config.coloreTema} coloreScuro={coloreScuro} styles={s} />
       ) : (
         <>
           {/* Overlay scuro dietro al menu mobile aperto: cliccandolo si chiude */}
           {isMobile && isMenuOpen && <div onClick={() => setIsMenuOpen(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', zIndex: 90, backdropFilter: 'blur(2px)' }} />}
 
-          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} themeColor={config.coloreTema} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} conteggioDaImportare={fileDaImportare.length} />
+          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} anni={listaAnni} onAddAnno={aggiungiAnno} onRemoveAnno={rimuoviAnno} onLogout={() => setCurrentUser(null)} currentUser={currentUser} coloreScuro={coloreScuro} isMobile={isMobile} isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} conteggioDaImportare={fileDaImportare.length} />
 
           <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px' : '30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             {isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-                <button onClick={() => setIsMenuOpen(true)} style={{ background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer', padding: '10px', borderRadius: '12px', display: 'flex' }}> 
-                  <Menu size={24} color="#1e293b" />
+                <button onClick={() => setIsMenuOpen(true)} style={{ background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', padding: '10px', borderRadius: '12px', display: 'flex' }}> 
+                  <Menu size={24} color="#262626" />
                 </button>
-                <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', margin: 0 }}>FinanceLab</h1>
+                <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#262626', margin: 0 }}>Arkiv</h1>
               </div>
             )}
 
             {/* Card sempre visibile in cima, qualunque sia la vista attiva sotto */}
-            <div style={{ ...s.card, background: `linear-gradient(135deg, ${config.coloreTema}, #1e1b4b)`, border: 'none', color: '#fff' }}>
+            <div style={{ ...s.card, background: `linear-gradient(135deg, ${config.coloreTema}, ${coloreScuro})`, border: 'none', color: '#fff' }}>
               <span style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8 }}>LIQUIDITÀ ATTUALE</span>
               <h2 style={{ fontSize: '42px', fontWeight: '900', margin: '10px 0' }}>€ {saldoAttuale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</h2>
             </div>
@@ -719,7 +723,7 @@ export default function App() {
                 key={activeTab} forza il rimontaggio di DashboardView al cambio anno, cosi'
                 tutto il suo stato interno (form, filtri grafico...) riparte pulito. */}
             {/^\d{4}$/.test(activeTab) && (
-              <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Caricamento registro...</div>}>
+              <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: '#737373' }}>Caricamento registro...</div>}>
                 <DashboardView
                   key={activeTab}
                   anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} topTags={topTags} showToast={showToast} isMobile={isMobile}

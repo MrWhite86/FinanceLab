@@ -88,24 +88,24 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
       <div style={styles.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
           <div>
-            <h2 style={{ fontWeight: '900', fontSize: '26px', margin: 0 }}>Documenti da Importare</h2>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>
+            <h2 style={{ fontWeight: '800', fontSize: '26px', margin: 0 }}>Documenti da Importare</h2>
+            <span style={{ fontSize: '12px', color: '#737373' }}>
               {percorsoCattura ? `Cartella di cattura: ${percorsoCattura}` : 'Nessuna cartella di cattura configurata (Impostazioni → Cartella di Cattura)'}
             </span>
           </div>
-          <button onClick={onRiscansiona} style={{ ...styles.btn('#475569'), width: 'auto' }}><RefreshCw size={16}/> Aggiorna</button>
+          <button onClick={onRiscansiona} style={{ ...styles.btn('#525252'), width: 'auto' }}><RefreshCw size={16}/> Aggiorna</button>
         </div>
       </div>
 
       {!percorsoCattura ? (
-        <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px', color: '#94a3b8' }}>
+        <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px', color: '#a3a3a3' }}>
           <FolderSync size={40} style={{ marginBottom: '12px' }} />
           <span style={{ fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
             Configura una cartella di cattura nelle Impostazioni per iniziare a importare documenti dal telefono.
           </span>
         </div>
       ) : fileDaImportare.length === 0 ? (
-        <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px', color: '#94a3b8' }}>
+        <div style={{ ...styles.card, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '50px', color: '#a3a3a3' }}>
           <Inbox size={40} style={{ marginBottom: '12px' }} />
           <span style={{ fontSize: '14px', fontWeight: '600' }}>Nessun documento in attesa. Tutto importato!</span>
         </div>
@@ -121,24 +121,24 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
               <div key={nomeFile} style={styles.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                    {isImmagine ? <FileImage size={18} color="#94a3b8" /> : <FileText size={18} color="#94a3b8" />}
+                    {isImmagine ? <FileImage size={18} color="#a3a3a3" /> : <FileText size={18} color="#a3a3a3" />}
                     <span style={{ fontWeight: '700', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeFile}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={() => apriPannello(nomeFile, 'allega')} style={{ ...styles.btn(pannelloAperto === 'allega' ? config.coloreTema : '#f1f5f9'), color: pannelloAperto === 'allega' ? '#fff' : '#475569', width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
+                    <button onClick={() => apriPannello(nomeFile, 'allega')} style={{ ...styles.btn(pannelloAperto === 'allega' ? config.coloreTema : '#f5f5f5'), color: pannelloAperto === 'allega' ? '#fff' : '#525252', width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
                       <Search size={14}/> Allega a esistente
                     </button>
-                    <button onClick={() => apriPannello(nomeFile, 'crea')} style={{ ...styles.btn(pannelloAperto === 'crea' ? config.coloreTema : '#f1f5f9'), color: pannelloAperto === 'crea' ? '#fff' : '#475569', width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
+                    <button onClick={() => apriPannello(nomeFile, 'crea')} style={{ ...styles.btn(pannelloAperto === 'crea' ? config.coloreTema : '#f5f5f5'), color: pannelloAperto === 'crea' ? '#fff' : '#525252', width: 'auto', fontSize: '12px', padding: '8px 12px' }}>
                       <ListPlus size={14}/> Crea nuovo record
                     </button>
-                    <X size={16} color="#cbd5e1" style={{ cursor: 'pointer' }} title="Ignora questo file (non lo importa, ma non ricompare più)" onClick={() => onIgnoraFile(nomeFile)} />
+                    <X size={16} color="#d4d4d4" style={{ cursor: 'pointer' }} title="Ignora questo file (non lo importa, ma non ricompare più)" onClick={() => onIgnoraFile(nomeFile)} />
                   </div>
                 </div>
 
                 {pannelloAperto === 'allega' && (
-                  <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ marginTop: '15px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
                     <div style={{ position: 'relative', marginBottom: '10px' }}>
-                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                      <Search size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#a3a3a3' }} />
                       <input
                         type="text"
                         autoFocus
@@ -150,13 +150,13 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                     </div>
                     {ricercaEsistente.trim() && (
                       risultatiRicerca.length === 0 ? (
-                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Nessun record trovato.</span>
+                        <span style={{ fontSize: '12px', color: '#a3a3a3' }}>Nessun record trovato.</span>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {risultatiRicerca.map(mov => (
                             <div key={mov.id} onClick={() => { onAllegaEsistente(nomeFile, mov); chiudiPannello(); }}
-                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
-                              <span style={{ fontSize: '13px', fontWeight: '600' }}>{mov.nota} <span style={{ color: '#94a3b8', fontWeight: '500' }}>({mov.data?.substring(0,4)})</span></span>
+                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#fff', borderRadius: '8px', border: '1px solid #e5e5e5', cursor: 'pointer' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '600' }}>{mov.nota} <span style={{ color: '#a3a3a3', fontWeight: '500' }}>({mov.data?.substring(0,4)})</span></span>
                               <span style={{ fontSize: '13px', fontWeight: '800' }}>€ {Number(mov.importo).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
                             </div>
                           ))}
@@ -167,9 +167,9 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                 )}
 
                 {pannelloAperto === 'crea' && (
-                  <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                  <div style={{ marginTop: '15px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
                     {supportaOcr && (
-                      <div style={{ marginBottom: '15px', padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ marginBottom: '15px', padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid #e5e5e5' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto', gap: '10px', alignItems: 'end', marginBottom: risultatoOcr ? '12px' : 0 }}>
                           <div>
                             <label style={styles.label}>FORNITORE (opzionale, migliora i suggerimenti nel tempo)</label>
@@ -185,11 +185,11 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {risultatoOcr.candidatiImporto.length > 0 && (
                               <div>
-                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8' }}>IMPORTI TROVATI (clicca quello giusto):</span>
+                                <span style={{ fontSize: '10px', fontWeight: '700', color: '#a3a3a3' }}>IMPORTI TROVATI (clicca quello giusto):</span>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                                   {risultatoOcr.candidatiImporto.slice(0, 5).map((c, i) => (
                                     <span key={i} title={c.contesto} onClick={() => scegliCandidatoImporto(c)}
-                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>
                                       € {c.valore.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                     </span>
                                   ))}
@@ -198,11 +198,11 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                             )}
                             {risultatoOcr.candidatiData.length > 0 && (
                               <div>
-                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8' }}>DATE TROVATE (clicca quella giusta):</span>
+                                <span style={{ fontSize: '10px', fontWeight: '700', color: '#a3a3a3' }}>DATE TROVATE (clicca quella giusta):</span>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                                   {risultatoOcr.candidatiData.slice(0, 5).map((c, i) => (
                                     <span key={i} title={c.contesto} onClick={() => scegliCandidatoData(c)}
-                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '800', cursor: 'pointer' }}>
+                                          style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>
                                       {c.valore.split('-').reverse().join('/')}
                                     </span>
                                   ))}
@@ -238,13 +238,13 @@ export default function ImportaView({ fileDaImportare, percorsoCattura, spese, c
                       <span style={styles.label}>SELEZIONA TAG:</span>
                       {['entrata', 'uscita', 'neutro'].map(tipo => (
                         <div key={tipo} style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                          <span style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', width: '55px' }}>{tipo.toUpperCase()}</span>
+                          <span style={{ fontSize: '9px', fontWeight: '700', color: '#a3a3a3', width: '55px' }}>{tipo.toUpperCase()}</span>
                           {config?.tags?.filter(t => t.tipo === tipo).map(t => (
                             <div key={t.nome} onClick={() => toggleTagNuovoRecord(t.nome)}
                                  style={{
                                    padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer',
-                                   background: nuovoRecord.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#64748b') : '#fff',
-                                   color: nuovoRecord.tags.includes(t.nome) ? '#fff' : '#64748b', border: '1px solid #e2e8f0',
+                                   background: nuovoRecord.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373') : '#fff',
+                                   color: nuovoRecord.tags.includes(t.nome) ? '#fff' : '#737373', border: '1px solid #e5e5e5',
                                    display: 'flex', alignItems: 'center', gap: '4px'
                                  }}>
                               <Tag size={10} style={{ opacity: 0.4 }} />
