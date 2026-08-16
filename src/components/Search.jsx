@@ -68,9 +68,9 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                 <div 
                   key={t.nome} 
                   onClick={() => setSelectedLibraryTags(prev => prev.includes(t.nome) ? prev.filter(tag => tag !== t.nome) : [...prev, t.nome])}
-                  style={{ 
-                    padding: '4px 10px', background: '#fff', 
-                    border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e5e5e5', 
+                  style={{
+                    padding: '4px 10px', background: styles.card.background,
+                    border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : `1px solid ${styles.border}`,
                     borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: config.coloreTema, 
                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
                     boxShadow: selectedLibraryTags.includes(t.nome) ? `0 0 8px ${config.coloreTema}40` : 'none'
@@ -96,7 +96,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
 
       <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#fafafa' }}>
+          <thead style={{ background: styles.bgSottile }}>
             <tr>
               <th style={styles.th('40px')}><input type="checkbox" checked={selectedRows.length === speseFiltrate.length && speseFiltrate.length > 0} onChange={(e) => setSelectedRows(e.target.checked ? speseFiltrate.map(s => s.id) : [])} /></th>
               <th style={styles.th('12%')}>Data</th><th style={styles.th('23%')}>Tag</th><th style={styles.th('40%')}>Dettagli</th><th style={styles.th('20%', 'right')}>Importo</th></tr>
@@ -107,15 +107,15 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
               const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
               const isUscita = tagInfos.some(t => t.tipo === 'uscita');
               const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
-              const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#262626');
+              const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : styles.testo);
               // Supporta anche il vecchio campo singolare "allegato" delle versioni precedenti dell'app
               const allegati = mov.allegati || (mov.allegato ? [mov.allegato] : []);
 
               return (
-                <tr key={mov.id} 
-                    style={{ 
-                      borderBottom: '1px solid #f5f5f5', 
-                      background: isNeutro ? '#fcfcfc' : 'white',
+                <tr key={mov.id}
+                    style={{
+                      borderBottom: `1px solid ${styles.border}`,
+                      background: isNeutro ? styles.bgSottile : styles.card.background,
                       boxShadow: animatedRowId === mov.id ? `0 0 0 3px ${config.coloreTema}80` : 'none',
                       transition: 'all 0.2s'
                     }}>
@@ -125,7 +125,7 @@ export default function SearchView({ searchTerm, setSearchTerm, speseFiltrate, c
                   <td style={{ padding: '16px 20px', fontSize:'13px' }}>{new Intl.DateTimeFormat('it-IT').format(new Date(mov.data))}</td>
                   <td style={{ padding: '16px 20px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {mov.tags?.map(t => (
-                      <span key={t} style={{ padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373' }}>
+                      <span key={t} style={{ padding: '4px 8px', background: styles.bgSottile2, borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373' }}>
                         {t.toUpperCase()}
                       </span>
                     ))}

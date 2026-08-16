@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { User, CheckCircle2 } from 'lucide-react';
 import { derivePasswordRecord, verifyPassword, isLegacyRecord } from '../authUtils';
-import ArkivMark from './ArkivMark';
+import logoArkiv from '../assets/logo-arkiv-orizzontale.png';
 
 export default function Login({ onLogin, themeColor, coloreScuro, styles }) {
   /** Mappa username -> record password ({hash, salt}, o stringa legacy da migrare), caricata da localStorage. */
@@ -96,10 +96,8 @@ export default function Login({ onLogin, themeColor, coloreScuro, styles }) {
       backgroundImage: `radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent), radial-gradient(circle at bottom left, rgba(0,0,0,0.35), transparent)`
     }}>
       <div style={{ ...styles.card, width: '90%', maxWidth: '440px', padding: '40px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
-          <div style={{ background: coloreScuro, padding: '18px', borderRadius: '20px' }}>
-            <ArkivMark size={40} />
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
+          <img src={logoArkiv} alt="Arkiv" style={{ width: '190px', height: 'auto' }} />
         </div>
         <h2 style={{ marginBottom: '8px', fontSize: '26px', fontWeight: '800', color: '#262626' }}>
           {authMode === 'login' ? 'Bentornato' : 'Nuovo Profilo'}

@@ -340,9 +340,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
         <h2 style={{ fontWeight: '800', fontSize: '26px' }}>Gestione {anno}</h2>
-        <div style={{ display: 'flex', background: '#e5e5e5', padding: '4px', borderRadius: '12px' }}>
-          <button onClick={() => setViewMode('dati')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'dati' ? '#fff' : 'transparent', color: viewMode === 'dati' ? config.coloreTema : '#737373' }}>DATI</button>
-          <button onClick={() => setViewMode('grafici')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'grafici' ? '#fff' : 'transparent', color: viewMode === 'grafici' ? config.coloreTema : '#737373' }}>ANALISI</button>
+        <div style={{ display: 'flex', background: styles.bgSottile2, padding: '4px', borderRadius: '12px' }}>
+          <button onClick={() => setViewMode('dati')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'dati' ? styles.card.background : 'transparent', color: viewMode === 'dati' ? config.coloreTema : '#737373' }}>DATI</button>
+          <button onClick={() => setViewMode('grafici')} style={{ padding: '8px 24px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', background: viewMode === 'grafici' ? styles.card.background : 'transparent', color: viewMode === 'grafici' ? config.coloreTema : '#737373' }}>ANALISI</button>
         </div>
       </div>
 
@@ -353,22 +353,22 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           <div style={styles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#262626' }}>Andamento Tag Personalizzati</h3>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: styles.testo }}>Andamento Tag Personalizzati</h3>
                 <span style={{ fontSize: '12px', color: '#737373' }}>Seleziona i tag per tracciarne e confrontarne l&rsquo;evoluzione mensile</span>
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 {/* Switch Tipo Grafico (Linee vs Barre) */}
-                <div style={{ display: 'flex', background: '#f5f5f5', padding: '3px', borderRadius: '10px', border: '1px solid #e5e5e5' }}>
+                <div style={{ display: 'flex', background: styles.bgSottile2, padding: '3px', borderRadius: '10px', border: `1px solid ${styles.border}` }}>
                   <button 
                     onClick={() => setChartType('line')}
-                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'line' ? '#fff' : 'transparent', color: chartType === 'line' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'line' ? styles.card.background : 'transparent', color: chartType === 'line' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <TrendingUp size={14} /> Linee
                   </button>
                   <button 
                     onClick={() => setChartType('bar')}
-                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'bar' ? '#fff' : 'transparent', color: chartType === 'bar' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', background: chartType === 'bar' ? styles.card.background : 'transparent', color: chartType === 'bar' ? config.coloreTema : '#737373', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <BarChart3 size={14} /> Barre
                   </button>
@@ -390,13 +390,13 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   </button>
                   <button 
                     onClick={() => setSelectedTagsForAnalysis(allAvailableTagNames)}
-                    style={{ padding: '5px 10px', background: '#f5f5f5', border: '1px solid #d4d4d4', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#525252' }}
+                    style={{ padding: '5px 10px', background: styles.bgSottile2, border: `1px solid ${styles.borderForte}`, borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: styles.testoMuto }}
                   >
                     Tutti
                   </button>
                   <button 
                     onClick={() => setSelectedTagsForAnalysis([])}
-                    style={{ padding: '5px 10px', background: '#f5f5f5', border: '1px solid #d4d4d4', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: '#525252' }}
+                    style={{ padding: '5px 10px', background: styles.bgSottile2, border: `1px solid ${styles.borderForte}`, borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer', color: styles.testoMuto }}
                   >
                     Nessuno
                   </button>
@@ -405,7 +405,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             </div>
 
             {/* Badge Interattivi dei Tag Raggruppati per Tipo */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', padding: '16px', background: '#fafafa', borderRadius: '12px', border: '1px solid #f5f5f5' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px', padding: '16px', background: styles.bgSottile, borderRadius: '12px', border: `1px solid ${styles.border}` }}>
               {['uscita', 'entrata', 'neutro'].map(tipo => {
                 const tagsByTipo = config?.tags?.filter(t => t.tipo === tipo) || [];
                 if (tagsByTipo.length === 0) return null;
@@ -435,9 +435,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                               alignItems: 'center',
                               gap: '6px',
                               transition: 'all 0.2s',
-                              background: isSelected ? strokeColor : '#ffffff',
+                              background: isSelected ? strokeColor : styles.card.background,
                               color: isSelected ? '#ffffff' : '#737373',
-                              border: `2px solid ${isSelected ? strokeColor : '#e5e5e5'}`,
+                              border: `2px solid ${isSelected ? strokeColor : styles.border}`,
                               boxShadow: isSelected ? `0 2px 8px ${strokeColor}40` : 'none',
                               transform: isSelected ? 'scale(1.03)' : 'scale(1)'
                             }}
@@ -456,9 +456,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
             {/* Grafico (Linee o Barre) o Messaggio Stato Vuoto */}
             {selectedTagsForAnalysis.length === 0 ? (
-              <div style={{ padding: '50px 20px', textAlign: 'center', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4', color: '#737373' }}>
+              <div style={{ padding: '50px 20px', textAlign: 'center', background: styles.bgSottile, borderRadius: '12px', border: `1px dashed ${styles.borderForte}`, color: '#737373' }}>
                 <BarChart2 size={40} color="#a3a3a3" style={{ marginBottom: '12px' }} />
-                <p style={{ margin: 0, fontWeight: '700', fontSize: '15px', color: '#262626' }}>Nessun tag selezionato</p>
+                <p style={{ margin: 0, fontWeight: '700', fontSize: '15px', color: styles.testo }}>Nessun tag selezionato</p>
                 <span style={{ fontSize: '12px', color: '#737373' }}>Seleziona uno o più tag in alto per visualizzare l&rsquo;andamento nel grafico.</span>
               </div>
             ) : (
@@ -467,7 +467,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   <ResponsiveContainer width="100%" height="100%">
                     {chartType === 'line' ? (
                       <LineChart data={datiAndamentoTag} margin={{ top: 15, right: 25, left: 15, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={styles.border} />
                         <XAxis dataKey="name" stroke="#737373" fontSize={12} fontWeight={600} />
                         <YAxis stroke="#737373" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
                         <Tooltip content={<CustomChartTooltip />} />
@@ -480,14 +480,14 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             name={tag.toUpperCase()}
                             stroke={colors[idx % colors.length]}
                             strokeWidth={3}
-                            dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                            dot={{ r: 4, strokeWidth: 2, fill: styles.card.background }}
                             activeDot={{ r: 7 }}
                           />
                         ))}
                       </LineChart>
                     ) : (
                       <BarChart data={datiAndamentoTag} margin={{ top: 15, right: 25, left: 15, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={styles.border} />
                         <XAxis dataKey="name" stroke="#737373" fontSize={12} fontWeight={600} />
                         <YAxis stroke="#737373" fontSize={11} fontWeight={600} tickFormatter={formatYAxis} width={60} />
                         <Tooltip content={<CustomChartTooltip />} />
@@ -513,7 +513,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       key={item.nome}
                       style={{ 
                         padding: '14px 18px', 
-                        background: '#fafafa', 
+                        background: styles.bgSottile, 
                         borderRadius: '12px', 
                         borderLeft: `5px solid ${colors[idx % colors.length]}`,
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -522,11 +522,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>{item.nome.toUpperCase()}</span>
-                        <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: item.tipo === 'entrata' ? '#d1fae5' : item.tipo === 'uscita' ? '#fee2e2' : '#e5e5e5', color: item.tipo === 'entrata' ? '#10b981' : item.tipo === 'uscita' ? '#ef4444' : '#737373' }}>
+                        <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: item.tipo === 'entrata' ? '#d1fae5' : item.tipo === 'uscita' ? '#fee2e2' : styles.bgSottile2, color: item.tipo === 'entrata' ? '#10b981' : item.tipo === 'uscita' ? '#ef4444' : '#737373' }}>
                           {item.tipo.toUpperCase()}
                         </span>
                       </div>
-                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#262626', margin: '6px 0' }}>
+                      <div style={{ fontSize: '20px', fontWeight: '900', color: styles.testo, margin: '6px 0' }}>
                         € {item.totale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                       </div>
                       <span style={{ fontSize: '11px', color: '#a3a3a3', fontWeight: '600' }}>
@@ -544,13 +544,13 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             {/* Card Patrimonio Netto */}
             <div style={{ ...styles.card, height: '400px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '15px' }}>
-                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626' }}>Patrimonio Netto Mensile</h4>
+                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: styles.testo }}>Patrimonio Netto Mensile</h4>
                 <span style={{ fontSize: '12px', color: '#737373' }}>Evoluzione cumulativa della liquidità nel corso del {anno}</span>
               </div>
               <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={datiGrafici.patrimonio} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5"/>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={styles.border}/>
                     <XAxis dataKey="name" fontSize={11} stroke="#737373" fontWeight={600} />
                     <YAxis fontSize={11} stroke="#737373" fontWeight={600} tickFormatter={formatYAxis} width={60} />
                     <Tooltip content={<CustomChartTooltip />} />
@@ -564,7 +564,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
             <div style={{ ...styles.card, height: '400px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626' }}>Ripartizione Uscite per Tag</h4>
+                  <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: styles.testo }}>Ripartizione Uscite per Tag</h4>
                   <span style={{ fontSize: '12px', color: '#737373' }}>Suddivisione percentuale delle spese dell&rsquo;anno</span>
                 </div>
                 {totaleUsciteAnno > 0 && (
@@ -590,7 +590,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                         labelLine={false}
                       >
                         {datiGrafici.torta.uscite.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="#ffffff" strokeWidth={2} />
+                          <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke={styles.card.background} strokeWidth={2} />
                         ))}
                       </Pie>
                       <Tooltip formatter={(value) => [`€ ${Number(value).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`, 'Importo Totale']} />
@@ -611,7 +611,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           {riassuntoValoriSecondari.length > 0 && (
             <div style={styles.card}>
               <div style={{ marginBottom: '15px' }}>
-                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: '#262626', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: styles.testo, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Calculator size={16} color={config.coloreTema} /> Valori Secondari
                 </h4>
                 <span style={{ fontSize: '12px', color: '#737373' }}>Totale e media dei valori secondari registrati nel {anno}, raggruppati per etichetta</span>
@@ -622,7 +622,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     key={item.etichetta}
                     style={{
                       padding: '14px 18px',
-                      background: '#fafafa',
+                      background: styles.bgSottile,
                       borderRadius: '12px',
                       borderLeft: `5px solid ${colors[idx % colors.length]}`,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
@@ -631,11 +631,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>{item.etichetta.toUpperCase()}</span>
-                      <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: '#e5e5e5', color: '#737373' }}>
+                      <span style={{ fontSize: '9px', fontWeight: '700', padding: '2px 6px', borderRadius: '4px', background: styles.bgSottile2, color: '#737373' }}>
                         {item.conteggio} {item.conteggio === 1 ? 'RECORD' : 'RECORDS'}
                       </span>
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: '900', color: '#262626', margin: '6px 0' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '900', color: styles.testo, margin: '6px 0' }}>
                       € {item.totale.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                     </div>
                     <span style={{ fontSize: '11px', color: '#a3a3a3', fontWeight: '600' }}>
@@ -710,7 +710,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <Plus size={12} /> AGGIUNGI VALORE SECONDARIO (es. lordo, non conta nel saldo)
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 1fr 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: styles.bgSottile, borderRadius: '12px', border: `1px dashed ${styles.borderForte}` }}>
                 <div>
                   <label style={styles.label}>VALORE SECONDARIO (€)</label>
                   <input type="number" value={nuovaSpesa.valoreSecondario} onChange={e => setNuovaSpesa({ ...nuovaSpesa, valoreSecondario: e.target.value })} style={styles.input} placeholder="0.00" />
@@ -736,7 +736,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <Plus size={12} /> AGGIUNGI SCADENZA (es. garanzia, dichiarazione redditi)
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '150px 30px', gap: '15px', alignItems: 'end', marginBottom: '20px', padding: '15px', background: styles.bgSottile, borderRadius: '12px', border: `1px dashed ${styles.borderForte}` }}>
                 <div>
                   <label style={styles.label}>SCADE IL</label>
                   <input type="date" value={nuovaSpesa.scadenza} onChange={e => setNuovaSpesa({ ...nuovaSpesa, scadenza: e.target.value })} style={styles.input} />
@@ -758,7 +758,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                 <Plus size={12} /> TRACCIA STATO PAGAMENTO (es. multe, bollette)
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', padding: '15px', background: '#fafafa', borderRadius: '12px', border: '1px dashed #d4d4d4' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', padding: '15px', background: styles.bgSottile, borderRadius: '12px', border: `1px dashed ${styles.borderForte}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setNuovaSpesa({ ...nuovaSpesa, pagato: !nuovaSpesa.pagato })}>
                   <input type="checkbox" checked={nuovaSpesa.pagato} onChange={() => {}} style={{ cursor: 'pointer' }} />
                   <span style={{ fontSize: '13px', color: '#737373', fontWeight: '700' }}>{nuovaSpesa.pagato ? 'Pagato' : 'Da pagare'}</span>
@@ -785,11 +785,11 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                         style={{ 
                           padding: '4px 10px', 
                           borderRadius: '8px', 
-                          border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : '1px solid #e5e5e5', 
+                          border: selectedLibraryTags.includes(t.nome) ? `2px solid ${config.coloreTema}` : `1px solid ${styles.border}`, 
                           fontSize: '10px', 
                           fontWeight: '700', 
                           cursor: 'pointer', 
-                          background: nuovaSpesa.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373') : '#fff', 
+                          background: nuovaSpesa.tags.includes(t.nome) ? (tipo === 'entrata' ? '#10b981' : tipo === 'uscita' ? '#ef4444' : '#737373') : styles.card.background, 
                           color: nuovaSpesa.tags.includes(t.nome) ? '#fff' : '#737373',
                           transition: 'all 0.2s',
                           display: 'flex',
@@ -829,7 +829,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
           */}
           <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: '#fafafa' }}>
+              <thead style={{ background: styles.bgSottile }}>
                 <tr>
                   <th style={styles.th('40px')}><input type="checkbox" checked={topLevelSpese.length > 0 && selectedRows.length === topLevelSpese.length} onChange={(e) => setSelectedRows(e.target.checked ? topLevelSpese.map(s => s.id) : [])} /></th>
                   <th style={styles.th('12%')}>Data</th>
@@ -852,7 +852,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     const isEntrata = tagInfos.some(t => t.tipo === 'entrata');
                     const isUscita = tagInfos.some(t => t.tipo === 'uscita');
                     const isNeutro = tagInfos.some(t => t.tipo === 'neutro');
-                    const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : '#262626');
+                    const amountColor = isEntrata ? '#10b981' : (isUscita ? '#ef4444' : styles.testo);
                     // riga.pagato è tracciato solo se l'utente ha usato "TRACCIA STATO PAGAMENTO" in creazione: undefined = non applicabile
                     const statoPagamentoTracciato = riga.pagato !== undefined;
                     const daPagare = riga.pagato === false;
@@ -866,10 +866,10 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
 
                     return (
                       <tr key={riga.id}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : '#fafafa'}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : styles.bgSottile}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = daPagare ? '#fffbeb' : 'transparent'}
                           style={{
-                            borderBottom: '1px solid #f5f5f5',
+                            borderBottom: `1px solid ${styles.border}`,
                             borderLeft: daPagare ? '4px solid #f59e0b' : '4px solid transparent',
                             transition: 'all 0.2s',
                             backgroundColor: daPagare ? '#fffbeb' : (isNeutro ? '#fcfcfc' : 'transparent'),
@@ -884,15 +884,15 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                             <span key={t}
                               onClick={() => onUpdateSpesa(riga.id, { tags: riga.tags.filter(tag => tag !== t) })}
                               title="Clicca per rimuovere questo tag"
-                              style={{ padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
+                              style={{ padding: '4px 8px', background: styles.bgSottile2, borderRadius: '6px', fontSize: '10px', fontWeight: '700', color: '#737373', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = '#f5f5f5'; e.currentTarget.style.color = '#737373'; }}>
+                              onMouseLeave={(e) => { e.currentTarget.style.background = styles.bgSottile2; e.currentTarget.style.color = '#737373'; }}>
                               {t.toUpperCase()}
                               <X size={10} />
                             </span>
                           ))}
                           {isFiglio && (!riga.tags || riga.tags.length === 0) && (
-                            <span style={{ fontSize: '10px', color: '#d4d4d4', fontStyle: 'italic' }}>Nessun tag</span>
+                            <span style={{ fontSize: '10px', color: styles.borderForte, fontStyle: 'italic' }}>Nessun tag</span>
                           )}
                         </td>
                         <td style={{ padding: '16px 20px' }}>
@@ -902,7 +902,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                                 ? <ChevronDown size={13} color="#a3a3a3" style={{ cursor: 'pointer', flexShrink: 0 }} title="Comprimi dettagli" onClick={() => toggleEspansione(riga.id)} />
                                 : <ChevronRight size={13} color="#a3a3a3" style={{ cursor: 'pointer', flexShrink: 0 }} title="Espandi dettagli" onClick={() => toggleEspansione(riga.id)} />
                             )}
-                            {isFiglio && <span style={{ color: '#d4d4d4' }}>↳</span>}
+                            {isFiglio && <span style={{ color: styles.borderForte }}>↳</span>}
                             {riga.nota}
                             {statoPagamentoTracciato && (
                               <span
@@ -997,7 +997,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                               <ListPlus size={15} color={config.coloreTema} style={{ cursor: 'pointer' }} title="Aggiungi una sottovoce" onClick={() => apriFormSottovoce(riga)} />
                             )}
                             {/* Cancellazione bloccata su una voce madre finché ha sottovoci: eviterebbe riferimenti orfani (contenitoreId che punta a un id non più esistente) */}
-                            <Trash2 size={15} color="#d4d4d4" style={{ cursor: 'pointer' }} onClick={() => {
+                            <Trash2 size={15} color={styles.borderForte} style={{ cursor: 'pointer' }} onClick={() => {
                               if (!isFiglio && haFigli) return showToast("Questa voce ha sottovoci collegate: rimuovile prima di eliminarla.");
                               onRemoveSpesa(riga.id);
                             }} />
@@ -1017,7 +1017,7 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                       {rigaApertaPerSottovoce === mov.id && (
                         // Mini-form inline sottovoce: aperto dal pulsante "+" (nuova) su questa riga madre,
                         // oppure dalla matita di una sottovoce esistente (sottovoceInModifica valorizzato)
-                        <tr style={{ background: '#fafafa', borderBottom: '1px solid #f5f5f5' }}>
+                        <tr style={{ background: styles.bgSottile, borderBottom: `1px solid ${styles.border}` }}>
                           <td></td>
                           <td colSpan={5} style={{ padding: '14px 20px 18px 40px' }}>
                             {sottovoceInModifica && (
@@ -1046,9 +1046,9 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                                 <div key={t.nome} onClick={() => toggleSottovoceTag(t.nome)}
                                   style={{
                                     padding: '4px 10px', borderRadius: '8px', fontSize: '10px', fontWeight: '700', cursor: 'pointer',
-                                    background: nuovaSottovoce.tags.includes(t.nome) ? (t.tipo === 'entrata' ? '#10b981' : t.tipo === 'uscita' ? '#ef4444' : '#737373') : '#fff',
+                                    background: nuovaSottovoce.tags.includes(t.nome) ? (t.tipo === 'entrata' ? '#10b981' : t.tipo === 'uscita' ? '#ef4444' : '#737373') : styles.card.background,
                                     color: nuovaSottovoce.tags.includes(t.nome) ? '#fff' : '#737373',
-                                    border: '1px solid #e5e5e5'
+                                    border: `1px solid ${styles.border}`
                                   }}>
                                   {t.nome.toUpperCase()}
                                 </div>

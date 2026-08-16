@@ -31,11 +31,16 @@ import { PAROLE_CHIAVE_IMPORTO_DEFAULT, PAROLE_CHIAVE_DATA_DEFAULT } from './ocr
  * - tags: le "categorie" disponibili per i movimenti; ognuna ha un "tipo" (entrata/uscita/neutro)
  *   che determina se un movimento con quel tag aumenta, riduce o non tocca il saldo.
  * - anniAttivi: gli anni (registri) mostrati di default nella barra laterale.
+ * - temaScuro: modalità chiara/scura del contenuto principale (Dashboard/Impostazioni/Ricerca/
+ *   Importa). Indipendente da coloreTema/coloreScuro, che riguardano solo la barra laterale e il
+ *   login (sempre scuri): qui invece cambia lo sfondo/testo delle schermate principali, di solito
+ *   bianche. Vedi il token "s" costruito in App.jsx.
  */
 export const INITIAL_CONFIG = {
   saldoStatoZero: 10000,
   dataStatoZero: '2024-01-01',
   coloreTema: '#4f46e5',
+  temaScuro: false,
   percorsoSalvataggio: '/Users/marcellobianco/Documents/Arkiv_Data',
   percorsoCattura: '',
   fileCatturaGestiti: [],

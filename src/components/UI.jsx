@@ -48,30 +48,30 @@ export const Toast = ({ message, onClose, onUndo, undoLabel = "ANNULLA" }) => (
  * sia per richiedere un valore testuale (type='prompt', es. "Nuovo Registro" -> l'anno da creare).
  * onConfirm riceve sempre inputValue: le conferme semplici lo ignorano semplicemente.
  */
-export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onConfirm, onCancel, themeColor }) => {
+export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onConfirm, onCancel, themeColor, styles }) => {
   if (!show) return null; // niente da renderizzare finche' nessuno chiama setModal({ show: true, ... })
   return (
-    <div style={{ 
-      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)', 
-      backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', 
-      justifyContent: 'center', zIndex: 200, padding: '20px' 
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.75)',
+      backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 200, padding: '20px'
     }}>
-      <div style={{ background: 'white', padding: '30px', borderRadius: '16px', maxWidth: '400px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-        <h3 style={{ marginTop: 0 }}>{title}</h3>
-        <p style={{ color: '#737373', fontSize: '14px' }}>{msg}</p>
-        
+      <div style={{ background: styles.card.background, padding: '30px', borderRadius: '16px', maxWidth: '400px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ marginTop: 0, color: styles.testo }}>{title}</h3>
+        <p style={{ color: styles.testoMuto, fontSize: '14px' }}>{msg}</p>
+
         {type === 'prompt' && (
-          <input 
-            type="text" autoFocus 
-            style={{ padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d4', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginTop: '10px' }} 
-            value={inputValue} 
+          <input
+            type="text" autoFocus
+            style={{ ...styles.input, marginTop: '10px' }}
+            value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
           />
         )}
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-          <button 
-            style={{ padding: '10px 20px', background: '#f5f5f5', color: '#737373', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }} 
+          <button
+            style={{ padding: '10px 20px', background: styles.bgSottile2, color: styles.testoMuto, border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
             onClick={onCancel}>ANNULLA</button>
           <button
             style={{ padding: '10px 20px', background: themeColor, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
@@ -88,7 +88,7 @@ export const Modal = ({ show, title, msg, type, inputValue, setInputValue, onCon
  * Sa mostrare solo immagini e PDF (i formati che i browser/webview sanno rendere nativamente,
  * vedi tipoConAnteprima in fileUtils.js); per gli altri formati mostra un avviso invece di un riquadro vuoto.
  */
-export const AnteprimaModal = ({ file, onClose }) => {
+export const AnteprimaModal = ({ file, onClose, styles }) => {
   if (!file) return null;
   const conAnteprima = tipoConAnteprima(file.tipo);
   return (
@@ -98,17 +98,17 @@ export const AnteprimaModal = ({ file, onClose }) => {
       justifyContent: 'center', zIndex: 300, padding: '20px'
     }} onClick={onClose}>
       <div
-        style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '900px', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' }}
+        style={{ background: styles.card.background, borderRadius: '16px', width: '100%', maxWidth: '900px', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f5f5f5' }}>
-          <span style={{ fontWeight: '800', fontSize: '14px', color: '#262626' }}>{file.nome}</span>
-          <X size={20} color="#737373" style={{ cursor: 'pointer' }} onClick={onClose} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${styles.border}` }}>
+          <span style={{ fontWeight: '800', fontSize: '14px', color: styles.testo }}>{file.nome}</span>
+          <X size={20} color={styles.testoMuto} style={{ cursor: 'pointer' }} onClick={onClose} />
         </div>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: styles.bgSottile }}>
           {!conAnteprima ? (
-            <div style={{ textAlign: 'center', color: '#737373', padding: '40px' }}>
-              <FileWarning size={40} color="#a3a3a3" style={{ marginBottom: '12px' }} />
+            <div style={{ textAlign: 'center', color: styles.testoMuto, padding: '40px' }}>
+              <FileWarning size={40} color={styles.testoMuto} style={{ marginBottom: '12px' }} />
               <p style={{ margin: 0, fontWeight: '700' }}>Anteprima non disponibile per questo formato</p>
               <span style={{ fontSize: '12px' }}>Apri il file dalla cartella di backup per visualizzarlo</span>
             </div>

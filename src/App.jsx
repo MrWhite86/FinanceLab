@@ -28,6 +28,7 @@ import { parseImportedData } from './importUtils';
 import { mimeTypeDaNomeFile, bytesToBase64 } from './fileUtils';
 import { nomeCartellaBackup, cartelleDaRimuovere, backupDaEseguireAllAvvio } from './backupUtils';
 import { scuraColore } from './colorUtils';
+import { interpretaScontrino, CATEGORIE_DEFAULT } from './ocr/interpretaScontrino';
 // I moduli OCR (tesseract.js/pdfjs-dist, pesanti) si caricano solo quando servono davvero (import
 // dinamico dentro estraiDatiOcr/impareOcrFornitore), non ad ogni avvio dell'app: stesso principio
 // già usato per Dashboard.jsx (lazy) con recharts, per non appesantire il caricamento iniziale
@@ -544,6 +545,51 @@ export default function App() {
     }
   };
 
+  /**
+   * Crea un record "scontrino" a partire da un file della cartella di cattura: una voce madre
+   * con l'importo totale (a cui resta allegato il file) e una sottovoce per ciascuna riga
+   * confermata dall'utente, taggata con la sua macro-categoria (vedi interpretaScontrino.js).
+   * Le sottovoci non toccano mai il saldo da sole (stesso meccanismo di registraSottovoce in
+   * Dashboard.jsx, contenitoreId): solo la voce madre viene sottratta, le sottovoci servono a
+   * mostrare la ripartizione per categoria nella vista ANALISI. Le categorie non ancora presenti
+   * in config.tags vengono aggiunte automaticamente (tipo "uscita"), cosi' la funzione resta
+   * utilizzabile "a freddo" senza dover prima configurare i tag a mano nelle Impostazioni.
+   */
+  const creaRecordScontrino = async (nomeFile, anno, { data, nota, righe }) => {
+    if (!isTauri()) { showToast("Solo versione Desktop."); return; }
+    if (!righe || righe.length === 0) return showToast("Nessuna riga da registrare.");
+    try {
+      const { copyFile, createDir } = window.__TAURI__.fs;
+      const { join } = window.__TAURI__.path;
+
+      const cartellaAnno = await join(config.percorsoSalvataggio, currentUser, 'backup', anno);
+      await createDir(cartellaAnno, { recursive: true });
+      await copyFile(await join(config.percorsoCattura, nomeFile), await join(cartellaAnno, nomeFile));
+
+      const categorieUsate = Array.from(new Set(righe.map(r => r.categoria).filter(Boolean)));
+      setConfig(prev => {
+        const nuoviAnni = prev.anniAttivi.includes(anno) ? prev.anniAttivi : [...prev.anniAttivi, anno];
+        const tagEsistenti = new Set((prev.tags || []).map(t => t.nome));
+        const nuoviTag = ['spesa', ...categorieUsate].filter(n => !tagEsistenti.has(n)).map(n => ({ nome: n, tipo: 'uscita' }));
+        return { ...prev, anniAttivi: nuoviAnni, tags: nuoviTag.length > 0 ? [...prev.tags, ...nuoviTag] : prev.tags };
+      });
+
+      const nuovoId = () => (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
+      const idMadre = nuovoId();
+      const totale = righe.reduce((somma, r) => somma + Number(r.importo), 0);
+      const madre = { id: idMadre, data, nota, importo: totale, tags: ['spesa'], allegati: [nomeFile] };
+      const sottovoci = righe.map(r => ({
+        id: nuovoId(), data, nota: r.descrizione, importo: Number(r.importo),
+        tags: [r.categoria || 'spesa'], contenitoreId: idMadre,
+      }));
+      setSpese(prev => [...prev, madre, ...sottovoci]);
+      segnaFileCatturaGestito(nomeFile);
+      showToast(`Scontrino registrato: ${righe.length} voci create.`);
+    } catch {
+      showToast("Errore durante la creazione del record.");
+    }
+  };
+
   // --- ESTRAZIONE AUTOMATICA DATI (OCR offline, vedi src/ocr/) ---
   /**
    * Legge un file ancora nella cartella di cattura (non ancora copiato in backup/): serve per
@@ -563,17 +609,13 @@ export default function App() {
   };
 
   /**
-   * Esegue l'OCR su un file (byte) e propone i candidati per importo/data, dando priorità alle
-   * parole chiave "imparate" per un fornitore specifico (se indicato) prima di quelle globali di
-   * config.ocr. Nessun candidato viene applicato automaticamente: la scelta finale resta sempre
-   * all'utente in Importa.jsx. Se il file è un PDF, lo rasterizza prima pagina per pagina (l'OCR
-   * sa leggere solo immagini) e concatena il testo di tutte le pagine: l'importo/scadenza di una
-   * bolletta non è sempre nella prima.
+   * Estrae il testo grezzo OCR da un file (immagine, oppure PDF rasterizzato pagina per pagina
+   * e concatenato: l'OCR sa leggere solo immagini, e il dato cercato non è sempre nella prima
+   * pagina). Condiviso da estraiDatiOcr e estraiScontrino, che poi interpretano quel testo
+   * ciascuno a modo proprio (un singolo importo/scadenza vs tante righe prodotto).
    */
-  const estraiDatiOcr = async (bytes, mimeType, fornitore) => {
+  const estraiTestoDocumento = async (bytes, mimeType) => {
     const { estraiTestoDaImmagine } = await import('./ocr/motoreOcr');
-    const { trovaImporti, trovaDate } = await import('./ocr/interpretaBolletta');
-    let testo;
     if (mimeType === 'application/pdf') {
       const { rasterizzaPaginePdf } = await import('./ocr/rasterizzaPdf');
       const immaginiPagine = await rasterizzaPaginePdf(bytes);
@@ -581,10 +623,20 @@ export default function App() {
       for (const immagine of immaginiPagine) {
         testiPagine.push(await estraiTestoDaImmagine(immagine, 'image/png'));
       }
-      testo = testiPagine.join('\n');
-    } else {
-      testo = await estraiTestoDaImmagine(bytes, mimeType);
+      return testiPagine.join('\n');
     }
+    return estraiTestoDaImmagine(bytes, mimeType);
+  };
+
+  /**
+   * Esegue l'OCR su un file (byte) e propone i candidati per importo/data, dando priorità alle
+   * parole chiave "imparate" per un fornitore specifico (se indicato) prima di quelle globali di
+   * config.ocr. Nessun candidato viene applicato automaticamente: la scelta finale resta sempre
+   * all'utente in Importa.jsx.
+   */
+  const estraiDatiOcr = async (bytes, mimeType, fornitore) => {
+    const testo = await estraiTestoDocumento(bytes, mimeType);
+    const { trovaImporti, trovaDate } = await import('./ocr/interpretaBolletta');
     const chiaveFornitore = (fornitore || '').trim().toLowerCase();
     const modello = chiaveFornitore ? config.ocr?.modelliFornitore?.[chiaveFornitore] : null;
     const paroleImporto = [...(modello?.paroleChiaveImporto || []), ...(config.ocr?.paroleChiaveImporto || [])];
@@ -594,6 +646,17 @@ export default function App() {
       candidatiImporto: trovaImporti(testo, paroleImporto),
       candidatiData: trovaDate(testo, paroleData),
     };
+  };
+
+  /**
+   * Come estraiDatiOcr, ma per uno scontrino: qui il problema non è "un solo importo/scadenza
+   * nel documento" ma "tante righe prodotto da isolare e classificare per macro-categoria" (vedi
+   * src/ocr/interpretaScontrino.js). Restituisce anche il testo grezzo, per coerenza con
+   * estraiDatiOcr anche se Importa.jsx non lo usa direttamente.
+   */
+  const estraiScontrino = async (bytes, mimeType) => {
+    const testo = await estraiTestoDocumento(bytes, mimeType);
+    return { testo, ...interpretaScontrino(testo, CATEGORIE_DEFAULT) };
   };
 
   /**
@@ -648,13 +711,41 @@ export default function App() {
 
   // Stili condivisi (l'app non usa CSS Modules/Tailwind: gli stili sono oggetti JS passati
   // via prop "styles" a tutti i componenti figli, cosi' l'aspetto resta coerente in tutta l'app).
-  const s = useMemo(() => ({
-    card: { background: '#ffffff', borderRadius: '16px', padding: '20px', border: '1px solid #e5e5e5', marginBottom: '20px' },
-    input: { padding: '12px 16px', borderRadius: '10px', border: '1px solid #d4d4d4', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
-    label: { fontSize: '11px', fontWeight: '700', color: '#a3a3a3', marginBottom: '6px', display: 'block' },
-    btn: (bg) => ({ padding: '12px 16px', background: bg, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }),
-    th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#737373', fontSize: '11px', fontWeight: '700', borderBottom: '2px solid #f5f5f5' }),
-  }), []);
+  // Oltre alle chiavi "storiche" (card/input/label/btn/th), espone anche dei token di colore
+  // semantici (bg/bgSottile/border/borderForte/testo) usati dai componenti al posto di hex
+  // fissi, cosi' la modalità chiara/scura (config.temaScuro) si applica ovunque cambiando solo
+  // questo oggetto, senza if sparsi in ogni componente.
+  const s = useMemo(() => {
+    const scuro = config.temaScuro;
+    return {
+      scuro,
+      bg: scuro ? '#171717' : '#fafafa',
+      bgSottile: scuro ? '#1f1f1f' : '#fafafa', // pannelli secondari, aree tratteggiate, hover leggero
+      bgSottile2: scuro ? '#262626' : '#f5f5f5', // un filo piu' presente (chip non selezionati, intestazioni tabella)
+      border: scuro ? '#404040' : '#e5e5e5',
+      borderForte: scuro ? '#525252' : '#d4d4d4',
+      testo: scuro ? '#fafafa' : '#171717',
+      testoMuto: '#737373', // grigio medio, gia' leggibile sia su sfondo chiaro che scuro
+      card: { background: scuro ? '#262626' : '#ffffff', borderRadius: '16px', padding: '20px', border: `1px solid ${scuro ? '#404040' : '#e5e5e5'}`, marginBottom: '20px' },
+      input: { padding: '12px 16px', borderRadius: '10px', border: `1px solid ${scuro ? '#525252' : '#d4d4d4'}`, background: scuro ? '#171717' : '#ffffff', color: scuro ? '#fafafa' : '#171717', width: '100%', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
+      label: { fontSize: '11px', fontWeight: '700', color: '#a3a3a3', marginBottom: '6px', display: 'block' },
+      btn: (bg) => ({ padding: '12px 16px', background: bg, color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }),
+      th: (w, align='left') => ({ width: w, textAlign: align, padding: '15px 20px', color: '#a3a3a3', fontSize: '11px', fontWeight: '700', borderBottom: `2px solid ${scuro ? '#404040' : '#f5f5f5'}` }),
+    };
+  }, [config.temaScuro]);
+
+  // Il body non passa da React (index.css lo imposta staticamente per il primo render): appena
+  // sappiamo se la modalità è chiara o scura lo aggiorniamo qui, cosi' anche gli elementi che non
+  // impostano un colore esplicito (ereditano da body, es. la maggior parte di h2/h3/span dell'app)
+  // seguono automaticamente il tema senza doverli toccare uno per uno.
+  useEffect(() => {
+    // html (non solo body) va aggiornato anche lui: body ha height:100% fisso in index.css, quindi
+    // su una pagina più alta di un viewport l'area che eccede mostrerebbe lo sfondo di html se
+    // restasse quello statico di index.css, creando una fascia visibilmente "sbagliata" in fondo.
+    document.documentElement.style.backgroundColor = s.bg;
+    document.body.style.backgroundColor = s.bg;
+    document.body.style.color = s.testo;
+  }, [s.bg, s.testo]);
 
   /** Variante scura del colore tema, per le superfici sempre scure (barra laterale, login): cosi' seguono la personalizzazione dell'utente invece di restare un grigio fisso scollegato. */
   const coloreScuro = useMemo(() => scuraColore(config.coloreTema, 0.85), [config.coloreTema]);
@@ -663,7 +754,7 @@ export default function App() {
   // Con utente loggato: layout con Sidebar fissa + area principale, dove viene mostrata
   // UNA sola vista alla volta in base ad activeTab (Ricerca / Impostazioni / Dashboard di un anno).
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: '#fafafa', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', width: '100%', backgroundColor: s.bg, fontFamily: 'Inter, sans-serif', position: 'relative' }}>
       {!currentUser ? (
         <LoginView onLogin={setCurrentUser} themeColor={config.coloreTema} coloreScuro={coloreScuro} styles={s} />
       ) : (
@@ -676,10 +767,10 @@ export default function App() {
           <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px' : '30px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             {isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-                <button onClick={() => setIsMenuOpen(true)} style={{ background: '#fff', border: '1px solid #e5e5e5', cursor: 'pointer', padding: '10px', borderRadius: '12px', display: 'flex' }}> 
-                  <Menu size={24} color="#262626" />
+                <button onClick={() => setIsMenuOpen(true)} style={{ background: s.card.background, border: `1px solid ${s.border}`, cursor: 'pointer', padding: '10px', borderRadius: '12px', display: 'flex' }}>
+                  <Menu size={24} color={s.testo} />
                 </button>
-                <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#262626', margin: 0 }}>Arkiv</h1>
+                <h1 style={{ fontSize: '18px', fontWeight: '900', color: s.testo, margin: 0 }}>Arkiv</h1>
               </div>
             )}
 
@@ -702,10 +793,13 @@ export default function App() {
                 onRiscansiona={() => scansionaCartellaCattura(config)}
                 onAllegaEsistente={allegaFileCatturaEsistente}
                 onCreaRecord={creaRecordDaCattura}
+                onCreaRecordScontrino={creaRecordScontrino}
                 onIgnoraFile={segnaFileCatturaGestito}
                 onLeggiFileCattura={leggiFileCattura}
                 onEstraiDatiOcr={estraiDatiOcr}
+                onEstraiScontrino={estraiScontrino}
                 onImparaOcrFornitore={impareOcrFornitore}
+                categorieScontrino={Object.keys(CATEGORIE_DEFAULT)}
                 showToast={showToast}
               />
             )}
@@ -744,8 +838,8 @@ export default function App() {
         </>
       )}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-      <Modal {...modal} themeColor={config.coloreTema} setInputValue={(val) => setModal(prev => ({...prev, inputValue: val}))} onCancel={() => setModal(prev => ({...prev, show: false}))} />
-      <AnteprimaModal file={anteprima} onClose={() => setAnteprima(null)} />
+      <Modal {...modal} themeColor={config.coloreTema} styles={s} setInputValue={(val) => setModal(prev => ({...prev, inputValue: val}))} onCancel={() => setModal(prev => ({...prev, show: false}))} />
+      <AnteprimaModal file={anteprima} onClose={() => setAnteprima(null)} styles={s} />
     </div>
   );
 }

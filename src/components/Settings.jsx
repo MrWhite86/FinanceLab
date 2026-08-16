@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Save, ScanText, Trash2, Unlock, Upload, X } from 'lucide-react';
+import { CloudUpload, Download, FolderSync, HardDriveDownload, Lock, Moon, Save, ScanText, Sun, Trash2, Unlock, Upload, X } from 'lucide-react';
 
 /**
  * SettingsView: sezioni indipendenti, tutte agiscono sull'oggetto "config" passato da
@@ -73,7 +73,17 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
           </div>
           <div>
             <label style={styles.label}>COLORE TEMA</label>
-            <input type="color" value={config.coloreTema} onChange={e => setConfig({ ...config, coloreTema: e.target.value })} style={{ ...styles.input, padding: '4px', height: '46px', cursor: 'pointer' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input type="color" value={config.coloreTema} onChange={e => setConfig({ ...config, coloreTema: e.target.value })} style={{ ...styles.input, padding: '4px', height: '46px', cursor: 'pointer' }} />
+              <button type="button" title="Predefinito chiaro" onClick={() => setConfig({ ...config, temaScuro: false })}
+                      style={{ width: '46px', height: '46px', flexShrink: 0, borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${!config.temaScuro ? config.coloreTema : styles.border}`, background: !config.temaScuro ? `${config.coloreTema}15` : styles.bgSottile2 }}>
+                <Sun size={18} color={!config.temaScuro ? config.coloreTema : styles.testoMuto} />
+              </button>
+              <button type="button" title="Predefinito scuro" onClick={() => setConfig({ ...config, temaScuro: true })}
+                      style={{ width: '46px', height: '46px', flexShrink: 0, borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${config.temaScuro ? config.coloreTema : styles.border}`, background: config.temaScuro ? `${config.coloreTema}15` : styles.bgSottile2 }}>
+                <Moon size={18} color={config.temaScuro ? config.coloreTema : styles.testoMuto} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -83,7 +93,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
         <div style={{ marginBottom: '15px' }}>
           <label style={styles.label}>{isAdmin ? "ROOT DI SISTEMA (Arkiv_main)" : "ARCHIVIO PERSONALE"}</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input type="text" value={isAdmin ? config.percorsoSalvataggio : `${config.percorsoSalvataggio}/${user.username}`} onChange={e => isAdmin && setConfig({ ...config, percorsoSalvataggio: e.target.value })} style={{ ...styles.input, background: (!isAdmin || bloccaPercorso) ? '#f5f5f5' : '#fff', color: (!isAdmin || bloccaPercorso) ? '#a3a3a3' : '#000', flex: 1 }} disabled={!isAdmin || bloccaPercorso} />
+            <input type="text" value={isAdmin ? config.percorsoSalvataggio : `${config.percorsoSalvataggio}/${user.username}`} onChange={e => isAdmin && setConfig({ ...config, percorsoSalvataggio: e.target.value })} style={{ ...styles.input, background: (!isAdmin || bloccaPercorso) ? styles.bgSottile2 : styles.input.background, color: (!isAdmin || bloccaPercorso) ? styles.testoMuto : styles.testo, flex: 1 }} disabled={!isAdmin || bloccaPercorso} />
             {isAdmin && (
               <button onClick={() => setBloccaPercorso(!bloccaPercorso)} style={{background:'transparent', border:'none', cursor:'pointer', color: bloccaPercorso ? '#a3a3a3' : config.coloreTema, fontWeight:700}}>
                 {bloccaPercorso ? <Lock size={18}/> : <Unlock size={18}/>}
@@ -136,7 +146,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
         <h3>Backup Cloud</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', cursor: 'pointer' }} onClick={() => aggiornaBackup('backupCloud', { attivo: !config.backupCloud?.attivo })}>
           <input type="checkbox" checked={!!config.backupCloud?.attivo} onChange={() => {}} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
-          <span style={{ fontSize: '13px', fontWeight: '700', color: '#262626' }}>Mantieni anche una copia su una cartella sincronizzata (iCloud Drive, Google Drive, iDrive...)</span>
+          <span style={{ fontSize: '13px', fontWeight: '700', color: styles.testo }}>Mantieni anche una copia su una cartella sincronizzata (iCloud Drive, Google Drive, iDrive...)</span>
         </div>
 
         {config.backupCloud?.attivo && (
@@ -144,7 +154,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
             <div style={{ marginBottom: '15px' }}>
               <label style={styles.label}>CARTELLA DI BACKUP CLOUD</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <input type="text" value={config.backupCloud?.percorso || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: '#f5f5f5', color: '#a3a3a3', flex: 1 }} />
+                <input type="text" value={config.backupCloud?.percorso || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: styles.bgSottile2, color: styles.testoMuto, flex: 1 }} />
                 <button onClick={onSelezionaCartellaBackupCloud} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><FolderSync size={18}/> Scegli Cartella</button>
               </div>
             </div>
@@ -183,7 +193,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
         </p>
         <label style={styles.label}>PERCORSO CARTELLA DI CATTURA</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <input type="text" value={config.percorsoCattura || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: '#f5f5f5', color: '#a3a3a3', flex: 1 }} />
+          <input type="text" value={config.percorsoCattura || ''} readOnly placeholder="Nessuna cartella selezionata" style={{ ...styles.input, background: styles.bgSottile2, color: styles.testoMuto, flex: 1 }} />
           <button onClick={onSelezionaCartellaCattura} style={{ ...styles.btn('#4f46e5'), width: 'auto' }}><FolderSync size={18}/> Scegli Cartella</button>
         </div>
       </div>
@@ -206,7 +216,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {config.ocr?.paroleChiaveImporto?.map(parola => (
-                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#fafafa', border: '1px solid #e5e5e5', borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: '#525252' }}>
+                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: styles.bgSottile, border: `1px solid ${styles.border}`, borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: styles.testoMuto }}>
                   {parola}
                   <X size={12} style={{ cursor: 'pointer' }} onClick={() => rimuoviParolaChiaveOcr('paroleChiaveImporto', parola)} />
                 </span>
@@ -223,7 +233,7 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {config.ocr?.paroleChiaveData?.map(parola => (
-                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: '#fafafa', border: '1px solid #e5e5e5', borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: '#525252' }}>
+                <span key={parola} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: styles.bgSottile, border: `1px solid ${styles.border}`, borderRadius: '8px', fontSize: '11px', fontWeight: '700', color: styles.testoMuto }}>
                   {parola}
                   <X size={12} style={{ cursor: 'pointer' }} onClick={() => rimuoviParolaChiaveOcr('paroleChiaveData', parola)} />
                 </span>
@@ -259,12 +269,12 @@ export default function SettingsView({ config, spese, setConfig, user, updatePro
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
           {config?.tags?.map(c => (
-            <div key={c.nome} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px', background: '#fafafa', borderRadius: '14px', border: '1px solid #e5e5e5' }}>
-              <span style={{ fontWeight: '700', fontSize: '11px', color: '#262626' }}>{c.nome.toUpperCase()}</span>
+            <div key={c.nome} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px', background: styles.bgSottile, borderRadius: '14px', border: `1px solid ${styles.border}` }}>
+              <span style={{ fontWeight: '700', fontSize: '11px', color: styles.testo }}>{c.nome.toUpperCase()}</span>
               <button onClick={() => toggleTipoCategoria(c.nome)} style={dotStyle(c.tipo)}>
                 {c.tipo === 'entrata' ? '+' : c.tipo === 'uscita' ? '-' : 'o'}
               </button>
-              <Trash2 size={14} color="#d4d4d4" cursor="pointer" onClick={()=>{
+              <Trash2 size={14} color={styles.borderForte} cursor="pointer" onClick={()=>{
                 setConfig({...config, tags: config.tags.filter(x=>x.nome!==c.nome)});
               }}/>
             </div>
