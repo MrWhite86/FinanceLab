@@ -99,6 +99,63 @@ export function useFinance(spese, config, activeTab, searchTerm) {
   }, [movimentiAnno, config.tags]);
 
   /**
+   * Analisi dedicata alla spesa registrata da scontrino (card "Spesa da Scontrini" in Dashboard.jsx,
+   * vista ANALISI). A differenza di datiTorta (che mescola OGNI tag uscita dell'app), qui si guarda
+   * solo alle macro-categorie configurate in config.categorieSpesa, cosi' l'utente vede la spesa
+   * alimentare/casa isolata da bollette/condominio/affitto senza doverle selezionare a mano.
+   * Il totale/andamento mensile viene dalla voce MADRE di ogni scontrino (tag "spesa", l'importo
+   * confermato dall'utente in fase di importazione) e non dalla somma delle sottovoci, che potrebbe
+   * essere incompleta se l'OCR non ha riconosciuto/classificato tutte le righe prodotto. La
+   * ripartizione per categoria invece puo' venire solo dalle sottovoci (sono loro a portare la
+   * macro-categoria specifica) e riflette quindi solo la porzione di spesa classificata.
+   * "andamentoCategorie"/"categorieConDati" alimentano un grafico a linee dedicato (una linea per
+   * macro-categoria, es. "pane e prodotti da forno"), separato dal generico "Andamento Tag
+   * Personalizzati" (che mescola ogni tag dell'app): solo le categorie con almeno un euro speso
+   * nell'anno compaiono, per non affollare il grafico di linee piatte a zero.
+   */
+  const datiSpesa = useMemo(() => {
+    const categorieSet = new Set(config.categorieSpesa || []);
+    const mesi = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+    let totaleAnno = 0;
+    let numeroScontrini = 0;
+
+    movimentiAnno.forEach(mov => {
+      if (mov.contenitoreId || !(mov.tags || []).includes('spesa')) return;
+      totaleAnno += Number(mov.importo) || 0;
+      numeroScontrini += 1;
+    });
+
+    const perCategoria = {};
+    const perCategoriaPerMese = {};
+    movimentiAnno.forEach(mov => {
+      if (!mov.contenitoreId) return;
+      const categoriaTag = (mov.tags || []).find(t => categorieSet.has(t));
+      if (!categoriaTag) return;
+      const importo = Number(mov.importo) || 0;
+      perCategoria[categoriaTag] = (perCategoria[categoriaTag] || 0) + importo;
+      if (!perCategoriaPerMese[categoriaTag]) perCategoriaPerMese[categoriaTag] = mesi.map(() => 0);
+      const meseIdx = Number(mov.data?.substring(5, 7)) - 1;
+      if (meseIdx >= 0 && meseIdx < 12) perCategoriaPerMese[categoriaTag][meseIdx] += importo;
+    });
+
+    const categorieConDati = Object.keys(perCategoria);
+    const andamentoCategorie = mesi.map((m, i) => {
+      const punto = { name: m };
+      categorieConDati.forEach(cat => { punto[cat] = perCategoriaPerMese[cat][i]; });
+      return punto;
+    });
+
+    return {
+      torta: Object.entries(perCategoria).map(([name, value]) => ({ name: name.toUpperCase(), value })),
+      categorieConDati,
+      andamentoCategorie,
+      totaleAnno,
+      mediaMensile: totaleAnno / 12,
+      numeroScontrini,
+    };
+  }, [movimentiAnno, config.categorieSpesa]);
+
+  /**
    * I 10 tag "più rilevanti" da mostrare come suggerimento iniziale nel grafico "Andamento Tag
    * Personalizzati" di Dashboard.jsx: prima 3 tag di default (condominio/bollette/stipendio),
    * poi gli altri tag ordinati per quante volte sono stati effettivamente usati nei movimenti.
@@ -124,6 +181,6 @@ export function useFinance(spese, config, activeTab, searchTerm) {
 
   return {
     listaAnni, movimentiAnno, saldoAttuale, speseFiltrateRicerca,
-    datiPatrimonioMese, datiTorta, topTags
+    datiPatrimonioMese, datiTorta, datiSpesa, topTags
   };
 }

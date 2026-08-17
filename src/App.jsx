@@ -204,7 +204,7 @@ export default function App() {
   // passano solo i dati grezzi e si ricevono i risultati già pronti da mostrare.
   const {
     listaAnni, movimentiAnno, saldoAttuale, speseFiltrateRicerca, topTags,
-    datiPatrimonioMese, datiTorta
+    datiPatrimonioMese, datiTorta, datiSpesa
   } = useFinance(spese, config, activeTab, searchTerm);
 
   /** Palette dei grafici: il primo colore segue sempre il tema scelto dall'utente, gli altri sono quelli fissi di COLORS. */
@@ -890,7 +890,7 @@ export default function App() {
                 <DashboardView
                   key={activeTab}
                   anno={activeTab} speseAnno={movimentiAnno} config={config} styles={s} colors={chartColors} topTags={topTags} showToast={showToast} isMobile={isMobile}
-                  datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta }}
+                  datiGrafici={{ patrimonio: datiPatrimonioMese, torta: datiTorta, spesa: datiSpesa }}
                   onAddSpesa={(newMov) => {
                     const id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : Date.now() + Math.random();
                     setSpese(prev => [...prev, { ...newMov, id, importo: Number(newMov.importo) }]);

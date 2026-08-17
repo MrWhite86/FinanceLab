@@ -8,7 +8,7 @@
 // È caricato "lazy" da App.jsx (solo quando serve, non al primo avvio) perché importa
 // recharts, una libreria di grafici pesante.
 import { useState, useMemo, useRef, Fragment } from 'react';
-import { BarChart2, BarChart3, Calculator, Check, ChevronDown, ChevronRight, Eye, FileText, ListPlus, Paperclip, Pencil, PieChart as PieChartIcon, Plus, Tag, Trash2, TrendingUp, X } from 'lucide-react';
+import { BarChart2, BarChart3, Calculator, Check, ChevronDown, ChevronRight, Eye, FileText, ListPlus, Paperclip, Pencil, PieChart as PieChartIcon, Plus, ShoppingBasket, Tag, Trash2, TrendingUp, X } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, BarChart, Bar, Legend, PieChart, Pie, Cell
@@ -67,6 +67,14 @@ const formatYAxis = (num) => {
 const renderCustomPieLabel = ({ name, percent }) => {
   if (!percent || percent < 0.04) return null; // Non mostra etichette per fette < 4%
   return `${name} ${(percent * 100).toFixed(0)}%`;
+};
+
+/** Come renderCustomPieLabel, ma senza il nome: le macro-categorie di spesa (es. "pane e prodotti
+ * da forno") sono molto più lunghe dei tag generici (bollette, affitto...) e "nome + percentuale"
+ * uscirebbe dai bordi della card. Il nome resta comunque leggibile nella legenda sotto al grafico. */
+const renderPercentualePieLabel = ({ percent }) => {
+  if (!percent || percent < 0.04) return null;
+  return `${(percent * 100).toFixed(0)}%`;
 };
 
 /**
@@ -643,6 +651,88 @@ export default function DashboardView({ anno, speseAnno, config, styles, colors,
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Card: Spesa da Scontrini - macro-categorie estratte via OCR (vedi Importa.jsx/interpretaScontrino.js).
+              A differenza di "Ripartizione Uscite per Tag" qui sopra (che mescola OGNI tag uscita
+              dell'app), guarda solo alle categorie di spesa configurate, cosi' la spesa alimentare/casa
+              si vede isolata da bollette/condominio/affitto senza doverle selezionare a mano. Nascosta
+              del tutto se non è mai stato registrato uno scontrino in quest'anno (niente card vuota). */}
+          {datiGrafici?.spesa?.numeroScontrini > 0 && (
+            <div style={styles.card}>
+              <div style={{ marginBottom: '15px' }}>
+                <h4 style={{ margin: 0, fontWeight: '700', fontSize: '16px', color: styles.testo, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShoppingBasket size={16} color={config.coloreTema} /> Spesa da Scontrini
+                </h4>
+                <span style={{ fontSize: '12px', color: '#737373' }}>Andamento e ripartizione per categoria della spesa registrata da scontrino nel {anno}</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+                <div style={{ padding: '14px 18px', background: styles.bgSottile, borderRadius: '12px', borderLeft: `5px solid ${config.coloreTema}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>TOTALE {anno}</span>
+                  <div style={{ fontSize: '20px', fontWeight: '900', color: styles.testo, margin: '6px 0' }}>€ {datiGrafici.spesa.totaleAnno.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div style={{ padding: '14px 18px', background: styles.bgSottile, borderRadius: '12px', borderLeft: `5px solid ${colors[1 % colors.length]}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>MEDIA MENSILE</span>
+                  <div style={{ fontSize: '20px', fontWeight: '900', color: styles.testo, margin: '6px 0' }}>€ {datiGrafici.spesa.mediaMensile.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div style={{ padding: '14px 18px', background: styles.bgSottile, borderRadius: '12px', borderLeft: `5px solid ${colors[2 % colors.length]}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#737373' }}>SCONTRINI REGISTRATI</span>
+                  <div style={{ fontSize: '20px', fontWeight: '900', color: styles.testo, margin: '6px 0' }}>{datiGrafici.spesa.numeroScontrini}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+                <div style={{ height: '340px', display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: styles.testo, marginBottom: '10px' }}>Andamento per Categoria</span>
+                  {datiGrafici.spesa.categorieConDati.length > 0 ? (
+                    <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={datiGrafici.spesa.andamentoCategorie} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={styles.border} />
+                          <XAxis dataKey="name" fontSize={11} stroke="#737373" fontWeight={600} />
+                          <YAxis fontSize={11} stroke="#737373" fontWeight={600} tickFormatter={formatYAxis} width={60} />
+                          <Tooltip content={<CustomChartTooltip />} />
+                          <Legend wrapperStyle={{ fontSize: '10px', fontWeight: '700', paddingTop: '6px' }} />
+                          {datiGrafici.spesa.categorieConDati.map((cat, idx) => (
+                            <Line key={cat} type="monotone" dataKey={cat} name={cat.toUpperCase()} stroke={colors[idx % colors.length]} strokeWidth={2.5} dot={{ r: 3, strokeWidth: 2, fill: styles.card.background }} activeDot={{ r: 6 }} />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#a3a3a3' }}>
+                      <ShoppingBasket size={32} style={{ marginBottom: '8px' }} />
+                      <span style={{ fontSize: '12px', fontWeight: '600', textAlign: 'center' }}>Nessuna riga classificata per categoria</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ height: '340px', display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: styles.testo, marginBottom: '10px' }}>Ripartizione per Categoria</span>
+                  {datiGrafici.spesa.torta.length > 0 ? (
+                    <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={datiGrafici.spesa.torta} cx="50%" cy="45%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="value" label={renderPercentualePieLabel} labelLine={false}>
+                            {datiGrafici.spesa.torta.map((entry, index) => (
+                              <Cell key={`cell-spesa-${index}`} fill={colors[index % colors.length]} stroke={styles.card.background} strokeWidth={2} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`€ ${Number(value).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`, 'Importo']} />
+                          <Legend wrapperStyle={{ fontSize: '10px', fontWeight: '700', paddingTop: '6px' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#a3a3a3' }}>
+                      <ShoppingBasket size={32} style={{ marginBottom: '8px' }} />
+                      <span style={{ fontSize: '12px', fontWeight: '600', textAlign: 'center' }}>Nessuna riga classificata per categoria</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
